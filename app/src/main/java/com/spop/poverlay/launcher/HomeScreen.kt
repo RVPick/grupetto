@@ -522,17 +522,24 @@ private fun AllAppsSheet(state: HomeState, actions: HomeActions) {
                                 )
                             }
                         }
-                        Text(
-                            if (pinned) "Pinned" else "Pin",
-                            color = if (pinned) PeloColors.Text else PeloColors.Pumice,
-                            fontFamily = PeloFonts.Body,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            modifier = Modifier
+                        // Same 44dp height as the uninstall button next to it.
+                        Box(
+                            Modifier
+                                .height(44.dp)
                                 .background(if (pinned) PeloColors.Cardinal else PeloColors.Woodsmoke, CircleShape)
+                                .clip(CircleShape)
                                 .clickable { actions.onTogglePin(app.packageName) }
-                                .padding(horizontal = 14.dp, vertical = 10.dp)
-                        )
+                                .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                if (pinned) "Pinned" else "Pin",
+                                color = if (pinned) PeloColors.Text else PeloColors.Pumice,
+                                fontFamily = PeloFonts.Body,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                     Text(
                         app.label,
