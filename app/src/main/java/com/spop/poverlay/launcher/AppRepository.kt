@@ -39,6 +39,15 @@ class AppRepository(private val context: Context) {
             .toList()
     }
 
+    /** Package names of every app [loadApps] would return, without loading icons. */
+    fun launchablePackages(): Set<String> {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return context.packageManager.queryIntentActivities(intent, 0)
+            .map { it.activityInfo.packageName }
+            .filter { it != context.packageName && !isPelotonPackage(it) }
+            .toSet()
+    }
+
     fun pinnedPackages(installed: Collection<String>): List<String> {
         val stored = prefs.getString(KeyPinned, null)
             ?: return DefaultPins.filter { it in installed }

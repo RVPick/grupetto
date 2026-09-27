@@ -28,12 +28,14 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +50,7 @@ private val CardShape = RoundedCornerShape(24.dp)
 private val TileShape = RoundedCornerShape(20.dp)
 private val ButtonShape = RoundedCornerShape(16.dp)
 private val LiveGreen = Color(0xFF5BD69A)
+const val ClosingLabel = "Closing…"
 
 data class HomeState(
     val greeting: String,
@@ -58,6 +61,8 @@ data class HomeState(
     val allApps: List<LaunchableApp>,
     val pinnedPackages: Set<String>,
     val showAllApps: Boolean,
+    /** Replaces the Close apps label while closing and briefly after (e.g. "902 MB free"). */
+    val closeAppsStatus: String? = null,
 )
 
 class HomeActions(
@@ -70,6 +75,7 @@ class HomeActions(
     val onOpenOverlaySettings: () -> Unit,
     val onOpenSystemSettings: () -> Unit,
     val onOpenPeloton: () -> Unit,
+    val onCloseApps: () -> Unit,
 )
 
 @Composable
@@ -85,7 +91,7 @@ fun HomeScreen(state: HomeState, actions: HomeActions) {
                 .padding(horizontal = 40.dp, vertical = 32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Header(state)
+            Header(state, actions)
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -104,7 +110,7 @@ fun HomeScreen(state: HomeState, actions: HomeActions) {
 }
 
 @Composable
-private fun Header(state: HomeState) {
+private fun Header(state: HomeState, actions: HomeActions) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -124,7 +130,8 @@ private fun Header(state: HomeState) {
             )
             Text(state.greeting, color = PeloColors.TextMuted, fontFamily = PeloFonts.Body, fontSize = 15.sp)
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            CloseAppsButton(state.closeAppsStatus, actions.onCloseApps)
             StatusChip("Bike", state.bikeConnected)
             StatusChip(state.heartRateDevice ?: "No HR strap", state.heartRateDevice != null)
         }
@@ -147,6 +154,29 @@ private fun StatusChip(label: String, live: Boolean) {
                 .background(if (live) LiveGreen else PeloColors.TextMuted, CircleShape)
         )
         Text(label, color = PeloColors.Pumice, fontFamily = PeloFonts.Body, fontSize = 14.sp, maxLines = 1)
+    }
+}
+
+@Composable
+private fun CloseAppsButton(status: String?, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .height(48.dp)
+            .border(1.dp, PeloColors.Divider, CircleShape)
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val done = status != null && status != ClosingLabel
+        Icon(
+            if (done) Icons.Filled.Check else Icons.Filled.Close,
+            contentDescription = null,
+            tint = if (done) LiveGreen else PeloColors.Pumice,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(status ?: "Close apps", color = PeloColors.Text, fontFamily = PeloFonts.Body, fontWeight = FontWeight.Medium, fontSize = 15.sp)
     }
 }
 

@@ -1,5 +1,6 @@
 package com.spop.poverlay.launcher
 
+import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
@@ -16,12 +17,14 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.spop.poverlay.MainActivity
 import com.spop.poverlay.overlay.OverlayService
 import com.spop.poverlay.sensor.heartrate.HeartRateManager
 import com.spop.poverlay.util.IsRunningOnPeloton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -37,6 +40,9 @@ class HomeActivity : ComponentActivity() {
 
     // Bumped on every resume so newly installed apps show up.
     private var refreshKey by mutableIntStateOf(0)
+
+    // Shown on the Close apps button while closing and briefly afterwards (a toast would sit under the ride pill).
+    private var closeAppsStatus by mutableStateOf<String?>(null)
 
     // Set when opening our own settings screen, which minimizes the overlay itself.
     private var skipOverlayRestore = false
@@ -72,6 +78,7 @@ class HomeActivity : ComponentActivity() {
                     allApps = allApps,
                     pinnedPackages = pinned.toSet(),
                     showAllApps = showAllApps,
+                    closeAppsStatus = closeAppsStatus,
                 ),
                 actions = HomeActions(
                     onStartRide = ::openDashboard,
@@ -96,6 +103,7 @@ class HomeActivity : ComponentActivity() {
                     },
                     onOpenSystemSettings = { startActivity(Intent(Settings.ACTION_SETTINGS)) },
                     onOpenPeloton = ::openPeloton,
+                    onCloseApps = ::closeBackgroundApps,
                 ),
             )
         }
@@ -150,6 +158,34 @@ class HomeActivity : ComponentActivity() {
         } catch (e: Exception) {
             toast("Peloton's home screen isn't available")
         }
+    }
+
+    /**
+     * Closes every background app we launch (not Pelo or its ride overlay, and not
+     * Peloton's system apps). Only works on apps that aren't in the foreground, which
+     * while the home screen is showing is all of them.
+     */
+    private fun closeBackgroundApps() {
+        if (closeAppsStatus != null) return
+        val activityManager = getSystemService(ActivityManager::class.java)
+        closeAppsStatus = ClosingLabel
+        lifecycleScope.launch {
+            val freeMb = withContext(Dispatchers.IO) {
+                repository.launchablePackages().forEach(activityManager::killBackgroundProcesses)
+                // Apps exit asynchronously; give the system a moment before measuring.
+                delay(3_000)
+                availableMemoryMb(activityManager)
+            }
+            closeAppsStatus = "$freeMb MB free"
+            delay(4_000)
+            closeAppsStatus = null
+        }
+    }
+
+    private fun availableMemoryMb(activityManager: ActivityManager): Long {
+        val info = ActivityManager.MemoryInfo()
+        activityManager.getMemoryInfo(info)
+        return info.availMem / (1024 * 1024)
     }
 
     private fun sendOverlayAction(action: String) {
