@@ -74,7 +74,8 @@ class HomeActivity : ComponentActivity() {
                     showAllApps = showAllApps,
                 ),
                 actions = HomeActions(
-                    onStartRide = ::startRide,
+                    onStartRide = ::openDashboard,
+                    onOpenDashboard = ::openDashboard,
                     onEndRide = ::endRide,
                     onOpenApp = ::openApp,
                     onTogglePin = { pkg ->
@@ -121,10 +122,9 @@ class HomeActivity : ComponentActivity() {
         // Stay on the home screen.
     }
 
-    private fun startRide() {
-        ContextCompat.startForegroundService(this, Intent(this, OverlayService::class.java))
-        // Start collapsed so the full bar doesn't cover the home screen; it expands when an app opens.
-        window.decorView.postDelayed({ sendOverlayAction(OverlayService.ActionMinimizeOverlay) }, 800)
+    /** Opens the ride dashboard, which starts a ride if none is running. */
+    private fun openDashboard() {
+        startActivity(Intent(this, RideActivity::class.java))
     }
 
     private fun endRide() {

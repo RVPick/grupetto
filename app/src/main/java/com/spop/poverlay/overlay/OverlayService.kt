@@ -62,6 +62,9 @@ class OverlayService : LifecycleEnabledService() {
     companion object {
         const val ActionMinimizeOverlay = "com.spop.poverlay.action.MINIMIZE_OVERLAY"
         const val ActionRestoreOverlay = "com.spop.poverlay.action.RESTORE_OVERLAY"
+        // Hide the overlay entirely while a full-screen view (the ride dashboard) shows the metrics
+        const val ActionHideOverlay = "com.spop.poverlay.action.HIDE_OVERLAY"
+        const val ActionShowOverlay = "com.spop.poverlay.action.SHOW_OVERLAY"
         private const val DefaultOverlayFlags = (LayoutParams.FLAG_NOT_TOUCH_MODAL
                 or LayoutParams.FLAG_NOT_FOCUSABLE
                 or LayoutParams.FLAG_LAYOUT_NO_LIMITS)
@@ -86,7 +89,12 @@ class OverlayService : LifecycleEnabledService() {
 
         private val mutableIsRunning = MutableStateFlow(false)
         val isRunning = mutableIsRunning.asStateFlow()
+
+        private val mutableSession = MutableStateFlow<RideSession?>(null)
+        val session = mutableSession.asStateFlow()
     }
+
+    private val overlayHidden = MutableStateFlow(false)
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var wakeLockRefreshJob: Job? = null
@@ -137,6 +145,8 @@ class OverlayService : LifecycleEnabledService() {
                     viewModel.minimizeOverlay()
                 }
             }
+            ActionHideOverlay -> overlayHidden.value = true
+            ActionShowOverlay -> overlayHidden.value = false
             ActionRestoreOverlay -> {
                 minimizedStateBeforeConfiguration?.let { previousState ->
                     sensorViewModel?.setMinimized(previousState)
@@ -153,6 +163,7 @@ class OverlayService : LifecycleEnabledService() {
         removeOverlayViews()
         releaseWakeLock()
         sensorViewModel = null
+        mutableSession.value = null
         super.onDestroy()
     }
 
@@ -200,6 +211,7 @@ class OverlayService : LifecycleEnabledService() {
             timerViewModel
         )
         this.sensorViewModel = sensorViewModel
+        mutableSession.value = RideSession(sensorViewModel, timerViewModel)
         // Wire up timer to auto-start/pause based on movement
         timerViewModel.observeMovement(sensorViewModel.isMoving, sensorViewModel.sessionReset)
 
@@ -300,7 +312,8 @@ class OverlayService : LifecycleEnabledService() {
                     dialogViewModel.partialOverlayFlags,
                     dialogViewModel.touchTargetHeight,
                     dialogViewModel.dialogSizeParams,
-                    dialogViewModel.minimizedDialogSizeParams
+                    dialogViewModel.minimizedDialogSizeParams,
+                    overlayHidden
                 ) { values ->
                     val origin = values[0] as Offset
                     val gravity = values[1] as Int
@@ -308,6 +321,7 @@ class OverlayService : LifecycleEnabledService() {
                     val touchTargetHeight = values[3] as Float
                     val (width, height)  = values[4] as Pair<Int,Int>
                     val (mWidth, mHeight)  = values[5] as Pair<Int,Int>
+                    val hidden = values[6] as Boolean
                     overlayParams.x = origin.x.roundToInt()
                     overlayParams.y = origin.y.roundToInt()
                     overlayParams.flags = DefaultOverlayFlags or overlayFlags
@@ -329,7 +343,8 @@ class OverlayService : LifecycleEnabledService() {
                         Timber.d("Overlay views cleared before update; skipping layout application")
                         return@combine
                     }
-                    currentTouchTarget.visibility = if (touchTargetHeight > 0f){
+                    currentOverlay.visibility = if (hidden) View.GONE else View.VISIBLE
+                    currentTouchTarget.visibility = if (touchTargetHeight > 0f && !hidden){
                         View.VISIBLE
                     }else{
                         View.GONE

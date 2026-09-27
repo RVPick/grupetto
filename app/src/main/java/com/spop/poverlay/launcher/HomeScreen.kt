@@ -62,6 +62,7 @@ data class HomeState(
 
 class HomeActions(
     val onStartRide: () -> Unit,
+    val onOpenDashboard: () -> Unit,
     val onEndRide: () -> Unit,
     val onOpenApp: (String) -> Unit,
     val onTogglePin: (String) -> Unit,
@@ -191,7 +192,19 @@ private fun JustRideCard(rideActive: Boolean, actions: HomeActions) {
         }
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (rideActive) {
-                BigButton("End ride", background = PeloColors.Pumice, content = PeloColors.Woodsmoke, onClick = actions.onEndRide)
+                BigButton(
+                    "Ride dashboard",
+                    background = PeloColors.Cardinal,
+                    content = Color.White,
+                    onClick = actions.onOpenDashboard
+                )
+                BigButton(
+                    "End ride",
+                    background = PeloColors.Pumice,
+                    content = PeloColors.Woodsmoke,
+                    height = 52.dp,
+                    onClick = actions.onEndRide
+                )
             } else {
                 BigButton(
                     "Start ride",
