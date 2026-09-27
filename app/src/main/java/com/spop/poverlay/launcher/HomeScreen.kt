@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,6 +69,7 @@ data class HomeState(
     /** Apps opened since boot and not closed since; null when Pelo lacks usage access. */
     val runningApps: List<RunningApp>? = emptyList(),
     val freeMemoryMb: Long? = null,
+    val pelotonLogo: ImageBitmap? = null,
 )
 
 class HomeActions(
@@ -110,7 +112,7 @@ fun HomeScreen(state: HomeState, actions: HomeActions) {
                 JustRideCard(state.rideActive, actions)
                 AppGrid(state, actions, Modifier.weight(1f))
             }
-            BottomBar(actions)
+            BottomBar(state, actions)
         }
         if (state.showAllApps) {
             AllAppsSheet(state, actions)
@@ -152,37 +154,37 @@ private fun Header(state: HomeState, actions: HomeActions) {
 
 @Composable
 private fun StatusChip(label: String, live: Boolean) {
-    Row(
-        Modifier
-            .background(PeloColors.Surface, CircleShape)
-            .border(1.dp, PeloColors.Divider, CircleShape)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    Chip(label) {
         Box(
             Modifier
                 .size(8.dp)
                 .background(if (live) LiveGreen else PeloColors.TextMuted, CircleShape)
         )
+    }
+}
+
+/** Pill used for the header's status chips and the Close apps button, so they all match. */
+@Composable
+private fun Chip(label: String, onClick: (() -> Unit)? = null, leading: @Composable () -> Unit) {
+    Row(
+        Modifier
+            .background(PeloColors.Surface, CircleShape)
+            .border(1.dp, PeloColors.Divider, CircleShape)
+            .clip(CircleShape)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        leading()
         Text(label, color = PeloColors.Pumice, fontFamily = PeloFonts.Body, fontSize = 14.sp, maxLines = 1)
     }
 }
 
 @Composable
 private fun CloseAppsButton(onClick: () -> Unit) {
-    Row(
-        Modifier
-            .height(48.dp)
-            .border(1.dp, PeloColors.Divider, CircleShape)
-            .clip(CircleShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Icon(Icons.Filled.Close, contentDescription = null, tint = PeloColors.Pumice, modifier = Modifier.size(20.dp))
-        Text("Close apps", color = PeloColors.Text, fontFamily = PeloFonts.Body, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+    Chip("Close apps", onClick) {
+        Icon(Icons.Filled.Close, contentDescription = null, tint = PeloColors.Pumice, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -370,7 +372,7 @@ private fun AllAppsTile(modifier: Modifier, onClick: () -> Unit) {
 }
 
 @Composable
-private fun BottomBar(actions: HomeActions) {
+private fun BottomBar(state: HomeState, actions: HomeActions) {
     // The ride pill sits bottom-center, so keep buttons at the edges where it can't cover them.
     Row(
         Modifier
@@ -384,13 +386,19 @@ private fun BottomBar(actions: HomeActions) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BarButton("Settings", Icons.Filled.Settings, onClick = actions.onOpenSystemSettings)
-            BarButton("Peloton", null, accent = true, onClick = actions.onOpenPeloton)
+            BarButton("Peloton", null, accent = true, logo = state.pelotonLogo, onClick = actions.onOpenPeloton)
         }
     }
 }
 
 @Composable
-private fun BarButton(label: String, icon: ImageVector?, accent: Boolean = false, onClick: () -> Unit) {
+private fun BarButton(
+    label: String,
+    icon: ImageVector?,
+    accent: Boolean = false,
+    logo: ImageBitmap? = null,
+    onClick: () -> Unit,
+) {
     Row(
         Modifier
             .width(172.dp)
@@ -400,7 +408,16 @@ private fun BarButton(label: String, icon: ImageVector?, accent: Boolean = false
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        if (icon != null) {
+        if (logo != null) {
+            Image(
+                logo,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(7.dp))
+            )
+            Spacer(Modifier.width(10.dp))
+        } else if (icon != null) {
             Icon(icon, contentDescription = null, tint = PeloColors.Pumice, modifier = Modifier.size(22.dp))
             Spacer(Modifier.width(8.dp))
         }

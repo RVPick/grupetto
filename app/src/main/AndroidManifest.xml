@@ -70,6 +70,8 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
         <package android:name="com.peloton.launcher" />
+        <!-- Its icon is the Peloton logo on Pelo's "Peloton" button -->
+        <package android:name="com.peloton.activity" />
     </queries>
 
     <application

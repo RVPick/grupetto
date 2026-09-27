@@ -73,7 +73,8 @@ class OverlaySensorViewModel(
 
 
     //TODO: Move this logic to dialog view model
-    private val mutableIsMinimized = MutableStateFlow(false)
+    // Rides start with the compact pill; the red button expands it.
+    private val mutableIsMinimized = MutableStateFlow(true)
     val isMinimized = mutableIsMinimized.asStateFlow()
 
     private val mutableErrorMessage = MutableStateFlow<String?>(null)

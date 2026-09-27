@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.spop.poverlay.MainActivity
@@ -63,6 +64,9 @@ class HomeActivity : ComponentActivity() {
                 pinned = repository.pinnedPackages(value.map { it.packageName })
                 appsByPackage = value.associateBy { it.packageName }
             }
+            val pelotonLogo by produceState<ImageBitmap?>(null) {
+                value = withContext(Dispatchers.IO) { repository.pelotonLogo() }
+            }
             val greeting by produceState(greeting()) {
                 while (true) {
                     value = greeting()
@@ -84,6 +88,7 @@ class HomeActivity : ComponentActivity() {
                     showRunningApps = showRunningApps,
                     runningApps = runningApps,
                     freeMemoryMb = freeMemoryMb,
+                    pelotonLogo = pelotonLogo,
                 ),
                 actions = HomeActions(
                     onStartRide = ::openDashboard,

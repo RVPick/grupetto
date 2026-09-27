@@ -126,6 +126,14 @@ class AppRepository(private val context: Context) {
         return installer == null || !isPelotonPackage(installer)
     }
 
+    /** The Peloton logo, taken from Peloton's own app on the tablet (null if it's missing). */
+    fun pelotonLogo(): ImageBitmap? = try {
+        context.packageManager.getApplicationIcon(PelotonLogoPackage)
+            .toBitmap(IconSizePx, IconSizePx).asImageBitmap()
+    } catch (e: Exception) {
+        null
+    }
+
     /** Opens Android's own "uninstall this app?" confirmation. */
     fun uninstallIntent(packageName: String): Intent =
         Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))
@@ -139,6 +147,7 @@ class AppRepository(private val context: Context) {
     companion object {
         private const val KeyPinned = "pinned"
         private const val KeyClosedPrefix = "closed_"
+        private const val PelotonLogoPackage = "com.peloton.activity"
         private const val IconSizePx = 144
         const val MaxPinned = 6
 
