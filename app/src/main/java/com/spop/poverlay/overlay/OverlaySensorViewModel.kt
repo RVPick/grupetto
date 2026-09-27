@@ -7,7 +7,7 @@ import android.content.Intent
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.spop.poverlay.MainActivity
+import com.spop.poverlay.launcher.OverlayEditorActivity
 import com.spop.poverlay.sensor.DeadSensorDetector
 import com.spop.poverlay.sensor.heartrate.HeartRateManager
 import com.spop.poverlay.sensor.interfaces.SensorInterface
@@ -101,7 +101,8 @@ class OverlaySensorViewModel(
 
     fun onOverlayDoubleTap() {
         getApplication<Application>().apply {
-            val intent = Intent(this, MainActivity::class.java)
+            // The gear on the overlay opens Pelo's Overlay page (Grupetto's settings screen is retired).
+            val intent = Intent(this, OverlayEditorActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         }
