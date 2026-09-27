@@ -41,6 +41,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -409,13 +411,22 @@ private fun BarButton(
         horizontalArrangement = Arrangement.Center
     ) {
         if (logo != null) {
-            Image(
-                logo,
-                contentDescription = null,
-                modifier = Modifier
+            // Peloton's icon has a thin white rim baked into its edges; draw it slightly
+            // enlarged inside a rounded box so only the red square and the "P" show.
+            Box(
+                Modifier
                     .size(30.dp)
                     .clip(RoundedCornerShape(7.dp))
-            )
+            ) {
+                Image(
+                    logo,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(scaleX = 1.06f, scaleY = 1.06f)
+                )
+            }
             Spacer(Modifier.width(10.dp))
         } else if (icon != null) {
             Icon(icon, contentDescription = null, tint = PeloColors.Pumice, modifier = Modifier.size(22.dp))
