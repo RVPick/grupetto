@@ -1,5 +1,9 @@
 package com.spop.poverlay.launcher
 
+import android.text.format.DateUtils
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,7 +32,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -50,7 +53,6 @@ private val CardShape = RoundedCornerShape(24.dp)
 private val TileShape = RoundedCornerShape(20.dp)
 private val ButtonShape = RoundedCornerShape(16.dp)
 private val LiveGreen = Color(0xFF5BD69A)
-const val ClosingLabel = "Closing…"
 
 data class HomeState(
     val greeting: String,
@@ -61,8 +63,10 @@ data class HomeState(
     val allApps: List<LaunchableApp>,
     val pinnedPackages: Set<String>,
     val showAllApps: Boolean,
-    /** Replaces the Close apps label while closing and briefly after (e.g. "902 MB free"). */
-    val closeAppsStatus: String? = null,
+    val showRunningApps: Boolean = false,
+    /** Apps opened since boot and not closed since; null when Pelo lacks usage access. */
+    val runningApps: List<RunningApp>? = emptyList(),
+    val freeMemoryMb: Long? = null,
 )
 
 class HomeActions(
@@ -75,7 +79,10 @@ class HomeActions(
     val onOpenOverlaySettings: () -> Unit,
     val onOpenSystemSettings: () -> Unit,
     val onOpenPeloton: () -> Unit,
-    val onCloseApps: () -> Unit,
+    val onShowRunningApps: (Boolean) -> Unit,
+    val onCloseApp: (String) -> Unit,
+    val onCloseAllApps: () -> Unit,
+    val onSwitchToApp: (String) -> Unit,
 )
 
 @Composable
@@ -106,6 +113,9 @@ fun HomeScreen(state: HomeState, actions: HomeActions) {
         if (state.showAllApps) {
             AllAppsSheet(state, actions)
         }
+        if (state.showRunningApps) {
+            RunningAppsSheet(state, actions)
+        }
     }
 }
 
@@ -131,7 +141,7 @@ private fun Header(state: HomeState, actions: HomeActions) {
             Text(state.greeting, color = PeloColors.TextMuted, fontFamily = PeloFonts.Body, fontSize = 15.sp)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            CloseAppsButton(state.closeAppsStatus, actions.onCloseApps)
+            CloseAppsButton { actions.onShowRunningApps(true) }
             StatusChip("Bike", state.bikeConnected)
             StatusChip(state.heartRateDevice ?: "No HR strap", state.heartRateDevice != null)
         }
@@ -158,7 +168,7 @@ private fun StatusChip(label: String, live: Boolean) {
 }
 
 @Composable
-private fun CloseAppsButton(status: String?, onClick: () -> Unit) {
+private fun CloseAppsButton(onClick: () -> Unit) {
     Row(
         Modifier
             .height(48.dp)
@@ -169,14 +179,8 @@ private fun CloseAppsButton(status: String?, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        val done = status != null && status != ClosingLabel
-        Icon(
-            if (done) Icons.Filled.Check else Icons.Filled.Close,
-            contentDescription = null,
-            tint = if (done) LiveGreen else PeloColors.Pumice,
-            modifier = Modifier.size(20.dp)
-        )
-        Text(status ?: "Close apps", color = PeloColors.Text, fontFamily = PeloFonts.Body, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+        Icon(Icons.Filled.Close, contentDescription = null, tint = PeloColors.Pumice, modifier = Modifier.size(20.dp))
+        Text("Close apps", color = PeloColors.Text, fontFamily = PeloFonts.Body, fontWeight = FontWeight.Medium, fontSize = 15.sp)
     }
 }
 
@@ -493,5 +497,155 @@ private fun AllAppsSheet(state: HomeState, actions: HomeActions) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RunningAppsSheet(state: HomeState, actions: HomeActions) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color(0xCC000000))
+            .clickable { actions.onShowRunningApps(false) }
+            // Start below Peloton's banner, which always covers the top center of the screen.
+            .padding(top = 124.dp, bottom = 24.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            Modifier
+                .width(760.dp)
+                .background(PeloColors.Surface, CardShape)
+                .border(1.dp, PeloColors.Divider, CardShape)
+                .clickable(enabled = false) {}
+                .padding(32.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "RUNNING APPS",
+                        color = PeloColors.Text,
+                        fontFamily = PeloFonts.Numbers,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 34.sp
+                    )
+                    Text(
+                        state.freeMemoryMb?.let { "$it MB of memory free" } ?: " ",
+                        color = PeloColors.TextMuted,
+                        fontFamily = PeloFonts.Body,
+                        fontSize = 15.sp
+                    )
+                }
+                val canCloseAll = state.runningApps == null || state.runningApps.isNotEmpty()
+                Box(
+                    Modifier
+                        .height(56.dp)
+                        .background(if (canCloseAll) PeloColors.Cardinal else PeloColors.Woodsmoke, ButtonShape)
+                        .clip(ButtonShape)
+                        .clickable(enabled = canCloseAll, onClick = actions.onCloseAllApps)
+                        .padding(horizontal = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "Close all",
+                        color = if (canCloseAll) Color.White else PeloColors.TextMuted,
+                        fontFamily = PeloFonts.Body,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 17.sp
+                    )
+                }
+                Box(
+                    Modifier
+                        .size(56.dp)
+                        .background(PeloColors.Woodsmoke, CircleShape)
+                        .clip(CircleShape)
+                        .clickable { actions.onShowRunningApps(false) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = PeloColors.Text, modifier = Modifier.size(28.dp))
+                }
+            }
+
+            val running = state.runningApps
+            when {
+                running == null -> Text(
+                    "Pelo can't see which apps are running yet. Run scripts/grant.sh to allow usage access. Close all still works.",
+                    color = PeloColors.Pumice,
+                    fontFamily = PeloFonts.Body,
+                    fontSize = 17.sp,
+                    lineHeight = 24.sp
+                )
+                running.isEmpty() -> Text(
+                    "No apps running.",
+                    color = PeloColors.Pumice,
+                    fontFamily = PeloFonts.Body,
+                    fontSize = 17.sp
+                )
+                else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(running, key = { it.app.packageName }) { item ->
+                        RunningAppRow(item, actions)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RunningAppRow(item: RunningApp, actions: HomeActions) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .background(PeloColors.Woodsmoke, TileShape)
+            .border(1.dp, PeloColors.Divider, TileShape)
+            .clip(TileShape)
+            .clickable { actions.onSwitchToApp(item.app.packageName) }
+            .padding(start = 16.dp, end = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Image(item.app.icon, contentDescription = null, modifier = Modifier.size(48.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                item.app.label,
+                color = PeloColors.Text,
+                fontFamily = PeloFonts.Body,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 19.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                lastUsedLabel(item.lastUsedMillis),
+                color = PeloColors.TextMuted,
+                fontFamily = PeloFonts.Body,
+                fontSize = 13.sp
+            )
+        }
+        Box(
+            Modifier
+                .height(56.dp)
+                .width(120.dp)
+                .border(1.dp, PeloColors.BorderStrong, ButtonShape)
+                .clip(ButtonShape)
+                .clickable { actions.onCloseApp(item.app.packageName) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Close", color = PeloColors.Text, fontFamily = PeloFonts.Body, fontWeight = FontWeight.Medium, fontSize = 17.sp)
+        }
+    }
+}
+
+private fun lastUsedLabel(lastUsedMillis: Long): String {
+    val now = System.currentTimeMillis()
+    return if (now - lastUsedMillis < DateUtils.MINUTE_IN_MILLIS) {
+        "Used just now"
+    } else {
+        "Used " + DateUtils.getRelativeTimeSpanString(lastUsedMillis, now, DateUtils.MINUTE_IN_MILLIS)
     }
 }

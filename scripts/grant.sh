@@ -12,7 +12,9 @@ adb shell appops set "$PELO_APP" REQUEST_INSTALL_PACKAGES allow
 # Scan for Bluetooth heart rate monitors (Android bundles BLE scanning with location).
 adb shell pm grant "$PELO_APP" android.permission.ACCESS_FINE_LOCATION
 adb shell pm grant "$PELO_APP" android.permission.ACCESS_COARSE_LOCATION
+# Read app usage, to list running apps under "Close apps" on the home screen.
+adb shell appops set "$PELO_APP" GET_USAGE_STATS allow
 # Keep the overlay service alive during long rides.
 adb shell dumpsys deviceidle whitelist "+$PELO_APP" >/dev/null
 
-echo "Granted overlay, install, location and battery-optimization exemptions to $PELO_APP"
+echo "Granted overlay, install, location, usage access and battery-optimization exemptions to $PELO_APP"

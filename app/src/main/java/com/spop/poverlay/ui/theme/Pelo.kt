@@ -24,6 +24,7 @@ object PeloColors {
     val OverlayBackground = Woodsmoke
     val Surface = Color(0xFF1C1E21)
     val Divider = Color(0xFF2C2F33)
+    val BorderStrong = Color(0xFF3E434A)
 
     val Text = Color.White
     val TextMuted = Color(0xFF8E9296)

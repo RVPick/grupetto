@@ -41,8 +41,11 @@ class HomeActivity : ComponentActivity() {
     // Bumped on every resume so newly installed apps show up.
     private var refreshKey by mutableIntStateOf(0)
 
-    // Shown on the Close apps button while closing and briefly afterwards (a toast would sit under the ride pill).
-    private var closeAppsStatus by mutableStateOf<String?>(null)
+    // "Close apps" window: running apps (null without usage access) and free memory.
+    private var showRunningApps by mutableStateOf(false)
+    private var runningApps by mutableStateOf<List<RunningApp>?>(emptyList())
+    private var freeMemoryMb by mutableStateOf<Long?>(null)
+    private var appsByPackage: Map<String, LaunchableApp> = emptyMap()
 
     // Set when opening our own settings screen, which minimizes the overlay itself.
     private var skipOverlayRestore = false
@@ -58,6 +61,7 @@ class HomeActivity : ComponentActivity() {
             val allApps by produceState(emptyList<LaunchableApp>(), refreshKey) {
                 value = withContext(Dispatchers.IO) { repository.loadApps() }
                 pinned = repository.pinnedPackages(value.map { it.packageName })
+                appsByPackage = value.associateBy { it.packageName }
             }
             val greeting by produceState(greeting()) {
                 while (true) {
@@ -65,7 +69,10 @@ class HomeActivity : ComponentActivity() {
                     delay(15_000)
                 }
             }
-            LaunchedEffect(refreshKey) { showAllApps = false }
+            LaunchedEffect(refreshKey) {
+                showAllApps = false
+                showRunningApps = false
+            }
 
             val byPackage = allApps.associateBy { it.packageName }
             HomeScreen(
@@ -78,7 +85,9 @@ class HomeActivity : ComponentActivity() {
                     allApps = allApps,
                     pinnedPackages = pinned.toSet(),
                     showAllApps = showAllApps,
-                    closeAppsStatus = closeAppsStatus,
+                    showRunningApps = showRunningApps,
+                    runningApps = runningApps,
+                    freeMemoryMb = freeMemoryMb,
                 ),
                 actions = HomeActions(
                     onStartRide = ::openDashboard,
@@ -103,7 +112,16 @@ class HomeActivity : ComponentActivity() {
                     },
                     onOpenSystemSettings = { startActivity(Intent(Settings.ACTION_SETTINGS)) },
                     onOpenPeloton = ::openPeloton,
-                    onCloseApps = ::closeBackgroundApps,
+                    onShowRunningApps = { show ->
+                        showRunningApps = show
+                        if (show) refreshRunningApps()
+                    },
+                    onCloseApp = { closeApps(listOf(it)) },
+                    onCloseAllApps = { closeApps(null) },
+                    onSwitchToApp = { pkg ->
+                        showRunningApps = false
+                        openApp(pkg)
+                    },
                 ),
             )
         }
@@ -160,25 +178,40 @@ class HomeActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Closes every background app we launch (not Pelo or its ride overlay, and not
-     * Peloton's system apps). Only works on apps that aren't in the foreground, which
-     * while the home screen is showing is all of them.
-     */
-    private fun closeBackgroundApps() {
-        if (closeAppsStatus != null) return
+    private fun refreshRunningApps() {
         val activityManager = getSystemService(ActivityManager::class.java)
-        closeAppsStatus = ClosingLabel
         lifecycleScope.launch {
-            val freeMb = withContext(Dispatchers.IO) {
-                repository.launchablePackages().forEach(activityManager::killBackgroundProcesses)
+            val (running, freeMb) = withContext(Dispatchers.IO) {
+                if (appsByPackage.isEmpty()) {
+                    appsByPackage = repository.loadApps().associateBy { it.packageName }
+                }
+                val running = repository.runningPackages()?.mapNotNull { (pkg, lastUsed) ->
+                    appsByPackage[pkg]?.let { RunningApp(it, lastUsed) }
+                }
+                running to availableMemoryMb(activityManager)
+            }
+            runningApps = running
+            freeMemoryMb = freeMb
+        }
+    }
+
+    /**
+     * Closes the given apps, or every app Pelo can launch when [packages] is null.
+     * Never touches Pelo or its ride overlay, or Peloton's system apps. Android only
+     * lets us close apps that aren't in front, which while home is showing is all of them.
+     */
+    private fun closeApps(packages: List<String>?) {
+        val activityManager = getSystemService(ActivityManager::class.java)
+        val targets = packages ?: repository.launchablePackages().toList()
+        runningApps = runningApps?.filterNot { it.app.packageName in targets }
+        lifecycleScope.launch {
+            freeMemoryMb = withContext(Dispatchers.IO) {
+                targets.forEach(activityManager::killBackgroundProcesses)
+                repository.markClosed(targets)
                 // Apps exit asynchronously; give the system a moment before measuring.
-                delay(3_000)
+                delay(2_000)
                 availableMemoryMb(activityManager)
             }
-            closeAppsStatus = "$freeMb MB free"
-            delay(4_000)
-            closeAppsStatus = null
         }
     }
 
