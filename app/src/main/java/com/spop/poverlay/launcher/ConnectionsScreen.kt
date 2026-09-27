@@ -66,7 +66,6 @@ data class ConnectionsState(
     val bleBroadcast: Boolean,
     val wifiBroadcast: Boolean,
     val broadcastName: String,
-    val showTimerWhenMinimized: Boolean,
 )
 
 class ConnectionsActions(
@@ -80,7 +79,6 @@ class ConnectionsActions(
     val onSaveZones: (List<Int?>) -> Unit,
     val onBleBroadcast: (Boolean) -> Unit,
     val onWifiBroadcast: (Boolean) -> Unit,
-    val onShowTimer: (Boolean) -> Unit,
 )
 
 @Composable
@@ -134,7 +132,6 @@ fun ConnectionsScreen(state: ConnectionsState, actions: ConnectionsActions) {
             ) {
                 HeadphonesCard(state, actions)
                 BroadcastingCard(state, actions)
-                OverlayCard(state, actions)
             }
         }
     }
@@ -447,17 +444,5 @@ private fun BroadcastingCard(state: ConnectionsState, actions: ConnectionsAction
         if (state.bleBroadcast || state.wifiBroadcast) {
             BodyText("Shows up as \"${state.broadcastName}\"", PeloColors.Pumice)
         }
-    }
-}
-
-@Composable
-private fun OverlayCard(state: ConnectionsState, actions: ConnectionsActions) {
-    Card("OVERLAY") {
-        SwitchRow(
-            title = "Timer in compact mode",
-            detail = "Show the ride timer in the small pill",
-            checked = state.showTimerWhenMinimized,
-            onChange = actions.onShowTimer
-        )
     }
 }

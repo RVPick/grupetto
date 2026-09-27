@@ -72,6 +72,7 @@ fun Overlay(
     val timerLabel by timerViewModel.timerLabel.collectAsState(initial = "")
     val isTimerPaused by timerViewModel.timerPaused.collectAsState(initial = false)
     val errorMessage by sensorViewModel.errorMessage.collectAsState(initial = null)
+    val layout by OverlayLayoutStore.layout.collectAsState()
 
     // Max values
     val maxPower by sensorViewModel.maxPower.collectAsState()
@@ -169,6 +170,10 @@ fun Overlay(
             cadenceLabel = rpm,
             resistanceLabel = resistance,
             heartRateLabel = heartRate?.toString() ?: SensorValuePlaceholderText,
+            speedLabel = speed,
+            speedUnit = speedLabel,
+            caloriesLabel = calories,
+            layout = layout,
             onTap = { timerViewModel.onTimerTap() },
             onLongPress = { timerViewModel.onTimerLongPress() },
             onOpenSettings = { sensorViewModel.onOverlayDoubleTap() },
@@ -240,6 +245,7 @@ fun Overlay(
                 maxHeartRate = "%.0f".format(maxHeartRate),
                 avgHeartRate = "%.0f".format(avgHeartRate),
                 showHeartRateCard = showHeartRateCard,
+                layout = layout,
                 onMetricSelected = { sensorViewModel.onMetricSelected(it) },
                 onSpeedUnitClicked = { sensorViewModel.onClickedSpeedUnit() },
                 onChartClicked = { sensorViewModel.onOverlayPressed() }

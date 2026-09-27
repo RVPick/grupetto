@@ -28,7 +28,7 @@ class OverlayDialogViewModel(
     val minimizedDialogSizeParams = MutableStateFlow(LayoutParams.WRAP_CONTENT to LayoutParams.WRAP_CONTENT)
     val partialOverlayFlags = MutableStateFlow(0)
     val touchTargetVisiblity = MutableStateFlow(View.GONE)
-    val dialogLocation = MutableStateFlow(OverlayLocation.Bottom)
+    val dialogLocation = MutableStateFlow(OverlayLayoutStore.layout.value.location)
     val dialogGravity = MutableStateFlow(dialogLocation.value.gravity)
 
 
@@ -98,6 +98,12 @@ class OverlayDialogViewModel(
         minimizedDialogSizeParams.value = size.width to currentHeight
     }
     private var horizontalDragScreenRange = calculateHorizontalDragScreenRange(0)
+
+    /** Moves the overlay to the top or bottom (from the Overlay page; drags don't save). */
+    fun setLocation(location: OverlayLocation) {
+        dialogLocation.value = location
+        dialogGravity.value = location.gravity
+    }
 
     // Takes the current vertical progress of a drag and returns a new progress
     // - Reset the progress to 0 and move the view once drag is halfway across screen

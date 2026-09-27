@@ -27,7 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
+import com.spop.poverlay.overlay.OverlayItem
+import com.spop.poverlay.overlay.OverlayLayout
 import com.spop.poverlay.ui.theme.MetricCadenceColor
+import com.spop.poverlay.ui.theme.MetricCalorieColor
+import com.spop.poverlay.ui.theme.MetricSpeedColor
 import com.spop.poverlay.ui.theme.MetricHeartRateColor
 import com.spop.poverlay.ui.theme.MetricPowerColor
 import com.spop.poverlay.ui.theme.MetricResistanceColor
@@ -50,6 +54,10 @@ fun OverlayMinimizedContent(
     cadenceLabel: String,
     resistanceLabel: String,
     heartRateLabel: String,
+    speedLabel: String,
+    speedUnit: String,
+    caloriesLabel: String,
+    layout: OverlayLayout,
     contentAlpha: Float,
     timerLabel: String,
     timerPaused: Boolean,
@@ -127,10 +135,18 @@ fun OverlayMinimizedContent(
         }
 
         if (isMinimized) {
-            MiniMetric(powerLabel, "W", MetricPowerColor)
-            MiniMetric(cadenceLabel, "rpm", MetricCadenceColor)
-            MiniMetric(resistanceLabel, "%", MetricResistanceColor)
-            MiniMetric(heartRateLabel, "bpm", MetricHeartRateColor)
+            // Metrics and their order come from the Overlay page (OverlayLayoutStore).
+            layout.pillItems.forEach { item ->
+                when (item) {
+                    OverlayItem.Output -> MiniMetric(powerLabel, "W", MetricPowerColor)
+                    OverlayItem.Cadence -> MiniMetric(cadenceLabel, "rpm", MetricCadenceColor)
+                    OverlayItem.Resistance -> MiniMetric(resistanceLabel, "%", MetricResistanceColor)
+                    OverlayItem.HeartRate -> MiniMetric(heartRateLabel, "bpm", MetricHeartRateColor)
+                    OverlayItem.Speed -> MiniMetric(speedLabel, speedUnit, MetricSpeedColor)
+                    OverlayItem.Calories -> MiniMetric(caloriesLabel, "kcal", MetricCalorieColor)
+                    OverlayItem.Chart -> Unit
+                }
+            }
         }
 
         Row(

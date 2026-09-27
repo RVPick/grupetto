@@ -56,6 +56,9 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
 import timber.log.Timber
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 
 class OverlayService : LifecycleEnabledService() {
@@ -216,6 +219,11 @@ class OverlayService : LifecycleEnabledService() {
         timerViewModel.observeMovement(sensorViewModel.isMoving, sensorViewModel.sessionReset)
 
         val dialogViewModel = OverlayDialogViewModel(screenSize, sensorViewModel.isMinimized)
+        // Follow top/bottom changes made on the Overlay page, even mid-ride.
+        lifecycleScope.launch {
+            OverlayLayoutStore.layout.map { it.location }.distinctUntilChanged().drop(1)
+                .collect { dialogViewModel.setLocation(it) }
+        }
 
         // Initialize and start watchdog (always enabled)
         val watchdogThreshold = 30.minutes

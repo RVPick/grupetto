@@ -102,6 +102,12 @@
         </activity>
 
         <activity
+            android:name=".launcher.OverlayEditorActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.PeloHome" />
+
+        <activity
             android:name=".launcher.ConnectionsActivity"
             android:exported="false"
             android:screenOrientation="landscape"

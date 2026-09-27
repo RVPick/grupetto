@@ -73,8 +73,8 @@ class OverlaySensorViewModel(
 
 
     //TODO: Move this logic to dialog view model
-    // Rides start with the compact pill; the red button expands it.
-    private val mutableIsMinimized = MutableStateFlow(true)
+    // Collapsed or expanded at the start of a ride, per the Overlay page.
+    private val mutableIsMinimized = MutableStateFlow(OverlayLayoutStore.layout.value.startCollapsed)
     val isMinimized = mutableIsMinimized.asStateFlow()
 
     private val mutableErrorMessage = MutableStateFlow<String?>(null)
@@ -122,7 +122,10 @@ class OverlaySensorViewModel(
             )
     }
 
-    private var useMph = MutableStateFlow(true)
+    // Units come from the Overlay page; tapping the unit on the overlay changes the saved setting.
+    private val useMph = OverlayLayoutStore.layout
+        .map { it.useMph }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, OverlayLayoutStore.layout.value.useMph)
 
     // Max value tracking
     private val mutableMaxPower = MutableStateFlow(0f)
@@ -288,9 +291,7 @@ class OverlaySensorViewModel(
     }
 
     fun onClickedSpeedUnit() {
-        viewModelScope.launch {
-            useMph.emit(!useMph.value)
-        }
+        OverlayLayoutStore.update { it.copy(useMph = !it.useMph) }
     }
 
     // Calculate calories burned by accumulating energy over time

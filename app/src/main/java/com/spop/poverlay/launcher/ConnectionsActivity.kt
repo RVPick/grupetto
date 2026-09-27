@@ -24,8 +24,8 @@ import com.spop.poverlay.releases.ReleaseChecker
 import com.spop.poverlay.sensor.heartrate.HeartRateManager
 
 /**
- * Pelo-style replacement for Grupetto's settings screen: headphones, heart rate,
- * broadcasting and the overlay timer. Reuses Grupetto's ConfigurationViewModel so the
+ * Pelo-style replacement for Grupetto's settings screen: headphones, heart rate and
+ * broadcasting (overlay options live on the Overlay page). Reuses Grupetto's ConfigurationViewModel so the
  * underlying behavior (and upstream merges) stay the same.
  */
 class ConnectionsActivity : ComponentActivity() {
@@ -81,7 +81,6 @@ class ConnectionsActivity : ComponentActivity() {
             val bleEnabled by viewModel.bleTxEnabled.collectAsState()
             val dirConEnabled by viewModel.dirConEnabled.collectAsState()
             val broadcastName by viewModel.bleFtmsDeviceName.collectAsState()
-            val showTimer by viewModel.showTimerWhenMinimized.collectAsState()
 
             ConnectionsScreen(
                 state = ConnectionsState(
@@ -96,7 +95,6 @@ class ConnectionsActivity : ComponentActivity() {
                     bleBroadcast = bleEnabled,
                     wifiBroadcast = dirConEnabled,
                     broadcastName = broadcastName,
-                    showTimerWhenMinimized = showTimer,
                 ),
                 actions = ConnectionsActions(
                     onClose = ::finish,
@@ -109,7 +107,6 @@ class ConnectionsActivity : ComponentActivity() {
                     onSaveZones = { z -> HeartRateManager.setHeartRateZones(z[0], z[1], z[2], z[3]) },
                     onBleBroadcast = viewModel::onBleTxEnabledClicked,
                     onWifiBroadcast = viewModel::onDirConEnabledClicked,
-                    onShowTimer = viewModel::onShowTimerWhenMinimizedClicked,
                 ),
             )
         }

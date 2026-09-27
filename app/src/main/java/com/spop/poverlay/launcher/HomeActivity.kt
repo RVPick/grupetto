@@ -18,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.spop.poverlay.MainActivity
 import com.spop.poverlay.overlay.OverlayService
 import com.spop.poverlay.sensor.heartrate.HeartRateManager
 import com.spop.poverlay.util.IsRunningOnPeloton
@@ -109,7 +108,7 @@ class HomeActivity : ComponentActivity() {
                     onShowAllApps = { showAllApps = it },
                     onOpenOverlaySettings = {
                         skipOverlayRestore = true
-                        startActivity(Intent(this, MainActivity::class.java))
+                        startActivity(Intent(this, OverlayEditorActivity::class.java))
                     },
                     onOpenSystemSettings = { startActivity(Intent(Settings.ACTION_SETTINGS)) },
                     onOpenPeloton = ::openPeloton,
