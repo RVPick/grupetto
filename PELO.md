@@ -52,3 +52,20 @@ Results:
 - **Overlays** draw over video apps (tested over NewPipe). Android hides third-party overlays while Settings is in front.
 - Peloton's "subscription removed" banner is drawn over every app. It can be dismissed with × but comes back.
 - Netflix (v9.40) is preinstalled by Peloton's device manager (`com.onepeloton.dm.android`).
+
+## Streaming apps (Phase 5, 2026-09-27)
+
+The bike has no Google Play Store or Play Services. Apps come from **Aurora Store** (F-Droid build, signed in anonymously), which downloads from Google Play without a Google account. Aurora has been granted install, storage and battery exemptions over ADB.
+
+| Service | App on the bike | Notes |
+|---|---|---|
+| Netflix | `com.netflix.mediaclient` | Preinstalled by Peloton. |
+| Disney+ | `com.disney.disneyplus` | From Aurora. |
+| Prime Video | `com.amazon.avod.thirdpartyclient` | From Aurora. Aurora tags it "Requires GSF", but it opens to Amazon sign-in. |
+| Peacock | `com.peacocktv.peacockandroid` | From Aurora. |
+| YouTube | SmartTube, `org.smarttube.stable` | The official app needs the Play Store and closes immediately, so it was removed. SmartTube is sideloaded from GitHub (MIT). It hides the nav bar; swipe up from the bottom edge for the P button. |
+| Twitch | Xtra, `com.github.andreyasadchy.xtra` | Google Play reports the official app as "not supported" on this device. Xtra is sideloaded from GitHub (AGPL-3.0). |
+
+NewPipe (`org.schabi.newpipe`) is also still installed.
+
+Signing in and HD playback haven't been tested yet. HD depends on Widevine L1, which is likely but unconfirmed.

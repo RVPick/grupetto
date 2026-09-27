@@ -60,13 +60,14 @@ class AppRepository(private val context: Context) {
         private const val IconSizePx = 144
         const val MaxPinned = 6
 
+        // Streaming apps that work on the bike without Google Play Services.
         private val DefaultPins = listOf(
-            "org.schabi.newpipe",
             "com.netflix.mediaclient",
-            "com.google.android.youtube",
             "com.disney.disneyplus",
-            "com.amazon.avod.thirdpartyclient",
-            "com.android.chrome",
+            "com.amazon.avod.thirdpartyclient", // Prime Video
+            "com.peacocktv.peacockandroid",
+            "org.smarttube.stable", // YouTube (the official app needs Play Services)
+            "com.github.andreyasadchy.xtra", // Twitch (Google Play won't offer the official app to this device)
         )
     }
 }
