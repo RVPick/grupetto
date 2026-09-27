@@ -1,74 +1,64 @@
 package com.spop.poverlay.util
 
-import android.view.ViewGroup
+import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.dp
 import com.spop.poverlay.overlay.OverlaySensorViewModel
-import com.yabu.livechart.model.DataPoint
-import com.yabu.livechart.model.Dataset
-import com.yabu.livechart.view.LiveChart
-import com.yabu.livechart.view.LiveChartStyle
 
+/**
+ * Line chart of recent sensor values, filling left to right across
+ * [OverlaySensorViewModel.GraphMaxDataPoints] slots.
+ *
+ * Drawn with a plain Canvas: [data] is read only in the draw phase, so a
+ * snapshot-state list redraws just the chart when it changes, with no
+ * recomposition. (This replaced an embedded chart view that was rebuilt on
+ * every update and kept the tablet's CPU busy.)
+ *
+ * [pauseChart] is kept for callers but no longer needed; redraws are cheap.
+ */
 @Composable
 fun LineChart(
     data: Collection<Number>,
     maxValue: Float,
     modifier: Modifier,
-    pauseChart: Boolean,
+    @Suppress("UNUSED_PARAMETER") pauseChart: Boolean,
     fillColor: Color = Color.LightGray,
     lineColor: Color = Color.DarkGray,
 ) {
-    // Use key to force recreation when colors, maxValue, or data source change
-    key(lineColor, fillColor, maxValue, data) {
-        AndroidView(
-            modifier = modifier,
-            factory = { context ->
-            LiveChart(context).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                clipChildren = false
-            }.setLiveChartStyle(LiveChartStyle().apply {
-                textColor = android.graphics.Color.BLUE
-                textHeight = 30f
-                mainColor = lineColor.toArgb()
-                mainFillColor = fillColor.toArgb()
-                baselineColor = android.graphics.Color.BLUE
-                pathStrokeWidth = 4f
-                baselineStrokeWidth = 6f
-                mainCornerRadius = 40f
-                secondColor = android.graphics.Color.TRANSPARENT
-            }).disableTouchOverlay()
+    Canvas(modifier) {
+        if (data.isEmpty() || maxValue <= 0f) return@Canvas
+        val strokeWidth = 2.dp.toPx()
+        val stepX = size.width / (OverlaySensorViewModel.GraphMaxDataPoints - 1)
+        val usableHeight = size.height - strokeWidth
+        fun yFor(value: Float) =
+            size.height - strokeWidth / 2 - (value.coerceIn(0f, maxValue) / maxValue) * usableHeight
 
-        },
-        update = { view ->
-            if (!pauseChart) {
-                view.setDataset(Dataset(data.mapIndexed { index, value ->
-                    //Start values at 1f to keep line visible at all times
-                    DataPoint(index.toFloat(), value.toFloat().coerceIn(1f, maxValue))
-                }.toMutableList()))
-                    .setSecondDataset(
-                        //There's no way to set explicit bounds with this graphing library
-                        //This hidden dataset forces the graph to cover the given bounds
-                        Dataset(
-                            mutableListOf(
-                                DataPoint(0f, 0f),
-                                DataPoint(
-                                    OverlaySensorViewModel.GraphMaxDataPoints.toFloat(),
-                                    maxValue
-                                )
-                            )
-                        )
-                    )
-                    .drawFill(withGradient = true)
-                    .drawDataset()
-            }
+        val line = Path()
+        var lastX = 0f
+        data.forEachIndexed { index, value ->
+            val x = index * stepX
+            val y = yFor(value.toFloat())
+            if (index == 0) line.moveTo(x, y) else line.lineTo(x, y)
+            lastX = x
         }
+        val fill = Path().apply {
+            addPath(line)
+            lineTo(lastX, size.height)
+            lineTo(0f, size.height)
+            close()
+        }
+        drawPath(fill, Brush.verticalGradient(listOf(fillColor, fillColor.copy(alpha = 0f))))
+        drawPath(
+            line,
+            lineColor,
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round, join = StrokeJoin.Round)
         )
     }
 }

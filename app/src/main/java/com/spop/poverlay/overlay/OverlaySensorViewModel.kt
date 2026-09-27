@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.sample
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration
@@ -153,19 +156,24 @@ class OverlaySensorViewModel(
     private val mutableSessionReset = MutableStateFlow(0L) // timestamp of last reset
     val sessionReset = mutableSessionReset.asStateFlow()
 
-    val maxPower = mutableMaxPower.asStateFlow()
-    val maxCadence = mutableMaxCadence.asStateFlow()
-    val maxResistance = mutableMaxResistance.asStateFlow()
-    val maxSpeed = mutableMaxSpeed.asStateFlow()
-    val maxHeartRate = mutableMaxHeartRate.asStateFlow()
+    // Session stats are accumulated on every sensor reading (many per second) but published
+    // at the UI rate, so screens showing them don't redraw at the sensor rate.
+    private fun <T> MutableStateFlow<T>.forUi(): StateFlow<T> =
+        sample(UiUpdatePeriod).stateIn(viewModelScope, SharingStarted.Eagerly, value)
 
-    val totalEnergy = mutableTotalEnergy.asStateFlow() // kilojoules
-    val totalDistance = mutableTotalDistance.asStateFlow() // miles
+    val maxPower = mutableMaxPower.forUi()
+    val maxCadence = mutableMaxCadence.forUi()
+    val maxResistance = mutableMaxResistance.forUi()
+    val maxSpeed = mutableMaxSpeed.forUi()
+    val maxHeartRate = mutableMaxHeartRate.forUi()
 
-    val avgSpeed = mutableAvgSpeed.asStateFlow() // mph
-    val avgResistance = mutableAvgResistance.asStateFlow()
-    val avgCadence = mutableAvgCadence.asStateFlow()
-    val avgHeartRate = mutableAvgHeartRate.asStateFlow()
+    val totalEnergy = mutableTotalEnergy.forUi() // kilojoules
+    val totalDistance = mutableTotalDistance.forUi() // miles
+
+    val avgSpeed = mutableAvgSpeed.forUi() // mph
+    val avgResistance = mutableAvgResistance.forUi()
+    val avgCadence = mutableAvgCadence.forUi()
+    val avgHeartRate = mutableAvgHeartRate.forUi()
 
     private fun updateSessionStats(power: Float, cadence: Float, resistance: Float, speed: Float, heartRate: Float) {
         val currentTime = System.currentTimeMillis()

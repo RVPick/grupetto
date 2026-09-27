@@ -147,7 +147,7 @@ private fun rideState(session: RideSession, pinnedApps: List<LaunchableApp>, sho
         speed = speed,
         speedUnit = speedUnit,
         calories = calories,
-        powerGraph = sensor.powerGraph.toList(),
+        powerGraph = sensor.powerGraph,
         powerGraphMax = maxOf(250f, maxPower),
         pinnedApps = pinnedApps,
         showAppPicker = showAppPicker,
