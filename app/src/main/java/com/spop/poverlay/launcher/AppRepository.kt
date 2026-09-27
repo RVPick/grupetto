@@ -17,8 +17,8 @@ data class LaunchableApp(
     val packageName: String,
     val label: String,
     val icon: ImageBitmap,
-    /** Came with the tablet, so it can't be uninstalled. */
-    val isSystem: Boolean = false,
+    /** False for apps that came with the tablet or that Peloton installed (e.g. Netflix). */
+    val canUninstall: Boolean = true,
 )
 
 /** An app opened since boot that hasn't been closed from Pelo since. */
@@ -48,8 +48,7 @@ class AppRepository(private val context: Context) {
                     packageName = info.packageName,
                     label = info.loadLabel(pm).toString(),
                     icon = info.loadIcon(pm).toBitmap(IconSizePx, IconSizePx).asImageBitmap(),
-                    isSystem = info.applicationInfo.flags and
-                        (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0,
+                    canUninstall = canUninstall(info.applicationInfo),
                 )
             }
             .sortedBy { it.label.lowercase() }
@@ -113,6 +112,18 @@ class AppRepository(private val context: Context) {
     fun markClosed(packages: Collection<String>) {
         val now = System.currentTimeMillis()
         prefs.edit().apply { packages.forEach { putLong(KeyClosedPrefix + it, now) } }.apply()
+    }
+
+    private fun canUninstall(info: ApplicationInfo): Boolean {
+        val isSystem = info.flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+        if (isSystem) return false
+        // Peloton's device manager may reinstall apps it put there, so leave those alone.
+        val installer = try {
+            context.packageManager.getInstallSourceInfo(info.packageName).installingPackageName
+        } catch (e: Exception) {
+            null
+        }
+        return installer == null || !isPelotonPackage(installer)
     }
 
     /** Opens Android's own "uninstall this app?" confirmation. */

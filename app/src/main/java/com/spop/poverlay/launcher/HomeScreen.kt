@@ -476,7 +476,7 @@ private fun AllAppsSheet(state: HomeState, actions: HomeActions) {
                     ) {
                         Image(app.icon, contentDescription = null, modifier = Modifier.size(48.dp))
                         Spacer(Modifier.weight(1f))
-                        if (!app.isSystem) {
+                        if (app.canUninstall) {
                             Box(
                                 Modifier
                                     .padding(end = 8.dp)
