@@ -33,7 +33,7 @@ Pull upstream changes with `git fetch upstream && git switch main && git merge u
 
 | | |
 |---|---|
-| Model | `PLTN-RB1VO` (original Bike), serial `IAPLBS2010061835` |
+| Model | `PLTN-RB1VO` (original Bike) |
 | OS | Android 11 (SDK 30), build `RO.250111.A`, security patch 2022-10-05, `user`/`release-keys` |
 | CPU | `arm64-v8a` only (no 32-bit support) |
 | Screen | 1920×1080 px at 240 dpi = **1280×720 dp** (matches the mockups 1:1) |
