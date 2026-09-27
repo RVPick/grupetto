@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Build the app, install it on the bike and launch it.
 #
-#   scripts/deploy.sh             debug build
-#   scripts/deploy.sh --release   minified release build (closer to real performance)
+#   scripts/deploy.sh           release build (what you ride with)
+#   scripts/deploy.sh --debug   debug build (debuggable, but much slower on the bike)
 set -euo pipefail
 source "$(dirname "$0")/common.sh"
 
-variant=debug
-[[ "${1:-}" == "--release" ]] && variant=release
+variant=release
+[[ "${1:-}" == "--debug" ]] && variant=debug
 task="assemble${variant^}"
 
 require_device

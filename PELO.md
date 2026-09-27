@@ -26,7 +26,7 @@ Pull upstream changes with `git fetch upstream && git switch main && git merge u
 | Script | What it does |
 |---|---|
 | `scripts/wifi.sh` | Switch adb to Wi-Fi (needs USB once; rerun after the bike reboots). The other scripts then prefer Wi-Fi and reconnect to the last known address automatically. |
-| `scripts/deploy.sh [--release]` | Build, `adb install -r`, grant permissions, launch |
+| `scripts/deploy.sh [--debug]` | Build, `adb install -r`, grant permissions, launch. Release by default; `--debug` is much slower on the bike. |
 | `scripts/restore.sh [--all]` | Uninstall our app and restore Peloton's home screen (`--all` also removes upstream Grupetto and NewPipe) |
 | `scripts/set-home.sh` | Make Pelo the home screen (the Home / "P" button). Undo with `restore.sh`, or tap **Peloton** on Pelo's home screen for a one-off visit. |
 | `scripts/grant.sh` | Grant overlay, package-install, location and battery-optimization exemptions over ADB. Changing permissions kills the running app, so relaunch afterwards. |
