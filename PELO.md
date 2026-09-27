@@ -69,3 +69,9 @@ The bike has no Google Play Store or Play Services. Apps come from **Aurora Stor
 NewPipe (`org.schabi.newpipe`) is also still installed.
 
 Signing in and HD playback haven't been tested yet. HD depends on Widevine L1, which is likely but unconfirmed.
+
+## Boot behavior (tested 2026-09-27)
+
+After `scripts/set-home.sh`, Pelo holds Android's HOME role (`dumpsys role`), which persists across reboots. On a cold boot Pelo's home screen came up about 24 s after the reboot, right after Android's `FallbackHome`. Peloton's boot receivers ran but never showed its launcher or activation screen; the only Peloton activity was `com.onepeloton.dm.android/.DummyActivity`, which is invisible. The tablet has no device owner or active device admin, so Peloton can't force its launcher through device policy.
+
+A reboot turns off ADB over Wi-Fi. Plug in USB and run `scripts/wifi.sh` to turn it back on.
