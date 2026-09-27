@@ -278,7 +278,7 @@ class OverlayService : LifecycleEnabledService() {
                     dialogViewModel::onTimerOverlayLayout
                 )
             }
-            alpha = 0.9f
+            alpha = 1f
             isFocusable = false
             clipToPadding = false
             clipChildren = false

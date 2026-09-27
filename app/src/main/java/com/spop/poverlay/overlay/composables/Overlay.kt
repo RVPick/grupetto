@@ -29,6 +29,7 @@ import androidx.compose.ui.zIndex
 import com.spop.poverlay.overlay.composables.OverlayMainContent
 import com.spop.poverlay.overlay.composables.OverlayMinimizedContent
 import com.spop.poverlay.sensor.heartrate.HeartRateManager
+import com.spop.poverlay.ui.theme.PeloColors
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
@@ -37,10 +38,10 @@ import timber.log.Timber
 
 const val VisibilityChangeDurationMs = 150
 val OverlayCornerRadius = 25.dp
-val StatCardWidth = 105.dp
+val StatCardWidth = 112.dp
 val PowerChartFullWidth = 200.dp
 val PowerChartShrunkWidth = 120.dp
-val BackgroundColorDefault = Color(20, 20, 20)
+val BackgroundColorDefault = PeloColors.OverlayBackground
 
 // Shown when a sensor hasn't reported a value yet
 const val SensorValuePlaceholderText = "-"
@@ -115,7 +116,7 @@ fun Overlay(
     }
 
     val timerAlpha by animateFloatAsState(
-        if (minimized) .5f else 1f,
+        1f,
         animationSpec = TweenSpec(VisibilityChangeDurationMs, 0, LinearEasing)
     )
 
@@ -166,7 +167,6 @@ fun Overlay(
             contentAlpha = timerAlpha,
             timerLabel = timerLabel,
             cadenceLabel = rpm,
-            speedLabel = speed,
             resistanceLabel = resistance,
             heartRateLabel = heartRate?.toString() ?: SensorValuePlaceholderText,
             onTap = { timerViewModel.onTimerTap() },
@@ -211,8 +211,8 @@ fun Overlay(
             OverlayMainContent(
                 modifier = Modifier
                     .wrapContentWidth(unbounded = true)
-                    .padding(horizontal = 9.dp)
-                    .padding(bottom = 5.dp),
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 6.dp),
                 rowAlignment = rowAlignment,
                 power = power,
                 rpm = rpm,

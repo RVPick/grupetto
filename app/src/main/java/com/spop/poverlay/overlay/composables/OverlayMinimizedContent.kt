@@ -2,7 +2,6 @@ package com.spop.poverlay.overlay.composables
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -23,15 +22,24 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.spop.poverlay.R
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.font.FontWeight
+import com.spop.poverlay.ui.theme.MetricCadenceColor
+import com.spop.poverlay.ui.theme.MetricHeartRateColor
+import com.spop.poverlay.ui.theme.MetricPowerColor
+import com.spop.poverlay.ui.theme.MetricResistanceColor
+import com.spop.poverlay.ui.theme.PeloColors
+import com.spop.poverlay.ui.theme.PeloFonts
 import com.spop.poverlay.overlay.BackgroundColorDefault
 import com.spop.poverlay.overlay.OverlayLocation
 
+
+/** Mid-ride touch targets: big enough to hit while pedaling. */
+private val ToggleButtonSize = 56.dp
+private val SettingsButtonSize = 44.dp
 
 @Composable
 fun OverlayMinimizedContent(
@@ -40,7 +48,6 @@ fun OverlayMinimizedContent(
     location: OverlayLocation,
     powerLabel: String,
     cadenceLabel: String,
-    speedLabel: String,
     resistanceLabel: String,
     heartRateLabel: String,
     contentAlpha: Float,
@@ -53,17 +60,12 @@ fun OverlayMinimizedContent(
     onLayout: (IntSize) -> Unit
 ) {
     val backgroundShape = if (isMinimized) {
-        RoundedCornerShape(8.dp)
+        RoundedCornerShape(percent = 50)
     } else {
         when (location) {
-            OverlayLocation.Top -> RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
-            OverlayLocation.Bottom -> RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+            OverlayLocation.Top -> RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
+            OverlayLocation.Bottom -> RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
         }
-    }
-    val expandedVerticalPadding = if (isMinimized) {
-        1.dp
-    } else {
-        0.dp
     }
     val size = remember { mutableStateOf(IntSize.Zero) }
 
@@ -76,13 +78,12 @@ fun OverlayMinimizedContent(
                     onLayout(size.value)
                 }
             }
-            .padding(vertical = expandedVerticalPadding)
+            .padding(vertical = if (isMinimized) 4.dp else 0.dp)
             .background(
                 color = BackgroundColorDefault,
                 shape = backgroundShape,
             )
-            .padding(horizontal = 10.dp)
-            .padding(top = 1.dp)
+            .padding(start = 22.dp, end = 6.dp, top = 6.dp, bottom = 6.dp)
             .animateContentSize()
             .pointerInput(Unit) {
                 detectTapGestures(
@@ -94,7 +95,7 @@ fun OverlayMinimizedContent(
                     }
                 )
             },
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(18.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val infiniteTransition = rememberInfiniteTransition()
@@ -103,7 +104,7 @@ fun OverlayMinimizedContent(
             val timerAlpha = if (timerPaused) {
                 infiniteTransition.animateFloat(
                     initialValue = 1f,
-                    targetValue = 0.6f,
+                    targetValue = 0.4f,
                     animationSpec = infiniteRepeatable(
                         animation = tween(500, easing = LinearEasing),
                         repeatMode = RepeatMode.Reverse
@@ -113,108 +114,100 @@ fun OverlayMinimizedContent(
                 1f
             }
 
-            OverlayTimerField(
-                modifier = Modifier
-                    .width(80.dp)
-                    .alpha(timerAlpha),
-                timerLabel = timerLabel,
-                iconDrawable = R.drawable.ic_timer
+            Text(
+                timerLabel,
+                color = PeloColors.Text,
+                fontFamily = PeloFonts.Numbers,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 30.sp,
+                modifier = Modifier.alpha(timerAlpha)
             )
         }
 
-        Spacer(modifier = Modifier.width(6.dp))
-        Icon(
-            imageVector = Icons.Filled.Settings,
-            contentDescription = "Open settings",
-            tint = Color.White,
-            modifier = Modifier
-                .size(20.dp)
-                .clickable { onOpenSettings() }
-        )
-
-        // Minimize/Maximize button
-        Spacer(modifier = Modifier.width(8.dp))
-        Icon(
-            imageVector = if (isMinimized) {
-                when (location) {
-                    OverlayLocation.Top -> Icons.Filled.KeyboardArrowDown
-                    OverlayLocation.Bottom -> Icons.Filled.KeyboardArrowUp
-                }
-            } else {
-                when (location) {
-                    OverlayLocation.Top -> Icons.Filled.KeyboardArrowUp
-                    OverlayLocation.Bottom -> Icons.Filled.KeyboardArrowDown
-                }
-            },
-            contentDescription = if (isMinimized) "Expand" else "Minimize",
-            tint = Color.White,
-            modifier = Modifier
-                .size(24.dp)
-                .clickable { onMinimizeToggle() }
-        )
-
         if (isMinimized) {
-            Spacer(modifier = Modifier.width(4.dp))
-            OverlayTimerField(
-                modifier = Modifier.width(58.dp),
-                timerLabel = powerLabel,
-                iconDrawable = R.drawable.ic_power
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            OverlayTimerField(
-                modifier = Modifier.width(58.dp),
-                timerLabel = cadenceLabel,
-                iconDrawable = R.drawable.ic_cadence
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            OverlayTimerField(
-                modifier = Modifier.width(58.dp),
-                timerLabel = resistanceLabel,
-                iconDrawable = R.drawable.ic_resistance
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            OverlayTimerField(
-                modifier = Modifier.width(58.dp),
-                timerLabel = speedLabel,
-                iconDrawable = R.drawable.ic_speed
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            OverlayTimerField(
-                modifier = Modifier.width(58.dp),
-                timerLabel = heartRateLabel,
-                iconDrawable = R.drawable.ic_hrm
-            )
+            MiniMetric(powerLabel, "W", MetricPowerColor)
+            MiniMetric(cadenceLabel, "rpm", MetricCadenceColor)
+            MiniMetric(resistanceLabel, "%", MetricResistanceColor)
+            MiniMetric(heartRateLabel, "bpm", MetricHeartRateColor)
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RoundButton(
+                size = SettingsButtonSize,
+                background = PeloColors.Surface,
+                onClick = onOpenSettings
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "Open settings",
+                    tint = PeloColors.Pumice,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            RoundButton(
+                size = ToggleButtonSize,
+                background = PeloColors.Cardinal,
+                onClick = onMinimizeToggle
+            ) {
+                Icon(
+                    imageVector = if (isMinimized) {
+                        when (location) {
+                            OverlayLocation.Top -> Icons.Filled.KeyboardArrowDown
+                            OverlayLocation.Bottom -> Icons.Filled.KeyboardArrowUp
+                        }
+                    } else {
+                        when (location) {
+                            OverlayLocation.Top -> Icons.Filled.KeyboardArrowUp
+                            OverlayLocation.Bottom -> Icons.Filled.KeyboardArrowDown
+                        }
+                    },
+                    contentDescription = if (isMinimized) "Expand" else "Minimize",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun OverlayTimerField(
-    modifier: Modifier,
-    timerLabel: String,
-    iconDrawable: Int,
-) {
-    Row(
-        modifier = modifier
-            .wrapContentHeight(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Image(
-            modifier = Modifier
-                .requiredHeight(20.dp)
-                .requiredWidth(16.dp)
-                .align(Alignment.CenterVertically)
-                .padding(vertical = 4.dp),
-            painter = painterResource(id = iconDrawable),
-            contentDescription = null,
+private fun MiniMetric(value: String, unit: String, color: Color) {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(
+            value,
+            color = color,
+            fontFamily = PeloFonts.Numbers,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            modifier = Modifier.alignByBaseline()
         )
         Text(
-            timerLabel,
-            color = Color.White,
-            fontSize = 19.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
+            unit,
+            color = PeloColors.TextMuted,
+            fontFamily = PeloFonts.Body,
+            fontSize = 12.sp,
+            modifier = Modifier.alignByBaseline()
         )
+    }
+}
+
+@Composable
+private fun RoundButton(
+    size: androidx.compose.ui.unit.Dp,
+    background: Color,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .background(background, CircleShape)
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        content()
     }
 }

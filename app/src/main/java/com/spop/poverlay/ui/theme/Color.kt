@@ -11,10 +11,10 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 val ErrorColor = Color(0.769f, 0.008f, 0.008f, 1.0f)
 
-// Metric colors for overlay
-val MetricPowerColor = Color(0xFFFFEB3B)      // Yellow
-val MetricCadenceColor = Color(0xFF4CAF50)    // Green
-val MetricSpeedColor = Color(0xFF2196F3)      // Blue
-val MetricResistanceColor = Color(0xFFD9182B) // Red
-val MetricHeartRateColor = Color(0xFFFF5252)  // Light red
-val MetricCalorieColor = Color(color = 0xFFC0C0C0)    // light grey
+// Metric colors for overlay (Peloton palette: white numbers, red Output)
+val MetricPowerColor = PeloColors.CardinalBright
+val MetricCadenceColor = PeloColors.Text
+val MetricSpeedColor = PeloColors.Pumice
+val MetricResistanceColor = PeloColors.Text
+val MetricHeartRateColor = PeloColors.Text
+val MetricCalorieColor = PeloColors.Pumice

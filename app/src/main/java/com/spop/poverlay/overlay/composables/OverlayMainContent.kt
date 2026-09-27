@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import com.spop.poverlay.R
 import com.spop.poverlay.overlay.MetricType
 import com.spop.poverlay.overlay.PowerChartFullWidth
 import com.spop.poverlay.overlay.PowerChartShrunkWidth
@@ -81,20 +80,18 @@ fun OverlayMainContent(
     Row(
             modifier = modifier,
             verticalAlignment = rowAlignment,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val statCardModifier = Modifier.requiredWidth(StatCardWidth)
 
         StatCard(
-                name = "Power",
+                name = "Output",
                 value = power,
-                unit = "watts",
+                unit = "W",
                 modifier = statCardModifier,
-                iconDrawable = R.drawable.ic_power,
-                maxValue = maxPower,
-                totalValue = totalEnergy,
-                totalUnit = "kJ",
+                detail = stats("$totalEnergy kJ", maxPower),
                 color = MetricPowerColor,
+                selected = selectedMetric == MetricType.POWER,
                 onClick = { onMetricSelected(MetricType.POWER) }
         )
 
@@ -103,11 +100,9 @@ fun OverlayMainContent(
                 value = rpm,
                 unit = "rpm",
                 modifier = statCardModifier,
-                iconDrawable = R.drawable.ic_cadence,
-                maxValue = maxCadence,
-                totalValue = avgCadence,
-                totalUnit = "avg",
+                detail = stats("avg $avgCadence", maxCadence),
                 color = MetricCadenceColor,
+                selected = selectedMetric == MetricType.CADENCE,
                 onClick = { onMetricSelected(MetricType.CADENCE) }
         )
 
@@ -148,7 +143,7 @@ fun OverlayMainContent(
                             Modifier.requiredWidth(chartWidth)
                                     .requiredHeight(90.dp)
                                     .padding(horizontal = chartPadding),
-                    fillColor = chartColor.copy(alpha = 0.6f),
+                    fillColor = chartColor.copy(alpha = 0.25f),
                     lineColor = chartColor,
             )
         }
@@ -158,11 +153,9 @@ fun OverlayMainContent(
                 value = resistance,
                 unit = "%",
                 modifier = statCardModifier,
-                iconDrawable = R.drawable.ic_resistance,
-                maxValue = maxResistance,
-                totalValue = avgResistance,
-                totalUnit = "avg",
+                detail = stats("avg $avgResistance", maxResistance),
                 color = MetricResistanceColor,
+                selected = selectedMetric == MetricType.RESISTANCE,
                 onClick = { onMetricSelected(MetricType.RESISTANCE) }
         )
 
@@ -171,11 +164,9 @@ fun OverlayMainContent(
                 value = speed,
                 unit = speedLabel,
                 modifier = statCardModifier,
-                iconDrawable = R.drawable.ic_speed,
-                maxValue = maxSpeed,
-                totalValue = totalDistance,
-                totalUnit = distanceUnit,
+                detail = stats("$totalDistance $distanceUnit", maxSpeed),
                 color = MetricSpeedColor,
+                selected = selectedMetric == MetricType.SPEED,
                 onClick = { onMetricSelected(MetricType.SPEED) },
                 onUnitClick = onSpeedUnitClicked
         )
@@ -186,23 +177,23 @@ fun OverlayMainContent(
                         value = heartRate,
                         unit = "bpm",
                         modifier = statCardModifier,
-                        iconDrawable = R.drawable.ic_hrm,
-                        maxValue = maxHeartRate,
-                        totalValue = avgHeartRate,
-                        totalUnit = "avg",
+                        detail = stats("avg $avgHeartRate", maxHeartRate),
                         color = MetricHeartRateColor,
+                        selected = selectedMetric == MetricType.HEART_RATE,
                         onClick = { onMetricSelected(MetricType.HEART_RATE) }
                 )
         }
-        
+
         StatCard(
-                "Calories",
-                calories,
-                color = MetricCalorieColor,
+                name = "Calories",
+                value = calories,
                 unit = "kcal",
-                maxValue = "",
                 modifier = statCardModifier,
-                iconDrawable = R.drawable.ic_calories
+                color = MetricCalorieColor
         )
     }
 }
+
+/** "avg 84 · max 110", leaving out the max until one has been recorded. */
+private fun stats(first: String, max: String) =
+        if (max == "0" || max == "0.0") first else "$first · max $max"
