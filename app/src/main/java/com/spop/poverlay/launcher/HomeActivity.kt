@@ -140,8 +140,7 @@ class HomeActivity : ComponentActivity() {
         super.onStop()
         // Leaving home closes its windows. Android's uninstall dialog only pauses home,
         // so All apps stays open for uninstalling several apps in a row.
-        showAllApps = false
-        showRunningApps = false
+        closeWindows()
         // Leaving home for an app: bring the full overlay back.
         if (!skipOverlayRestore) {
             sendOverlayAction(OverlayService.ActionRestoreOverlay)
@@ -149,9 +148,22 @@ class HomeActivity : ComponentActivity() {
         skipOverlayRestore = false
     }
 
-    @Deprecated("Home screen has nowhere to go back to")
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // Home pressed while already home: like other launchers, return to the main page.
+        if (intent.hasCategory(Intent.CATEGORY_HOME)) {
+            closeWindows()
+        }
+    }
+
+    @Deprecated("Back only closes home's windows; there's nothing behind the home screen")
     override fun onBackPressed() {
-        // Stay on the home screen.
+        closeWindows()
+    }
+
+    private fun closeWindows() {
+        showAllApps = false
+        showRunningApps = false
     }
 
     /** Opens the ride dashboard, which starts a ride if none is running. */
