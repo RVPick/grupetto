@@ -1,19 +1,25 @@
 # Pelo: personal fork of Grupetto
 
-This `pelo` branch builds on [doudar/grupetto](https://github.com/doudar/grupetto) to make a custom launcher and ride overlay for an original Peloton Bike with no membership. `main` tracks upstream unchanged; our work lives on `pelo`.
+This `pelo` branch builds on [doudar/grupetto](https://github.com/doudar/grupetto) to make a custom launcher and ride overlay for an original Peloton Bike with no membership. `develop` (upstream's main branch) stays identical to upstream; our work lives on `pelo`.
 
 Grupetto has no license, so this fork is for personal use on our own bike only. Don't publish builds.
 
 Differences from upstream:
 
-- Application ID `dev.pickture.pelo` (the Kotlin package stays `com.spop.poverlay` to keep upstream merges easy), so it installs alongside, not over, upstream Grupetto.
+- Application ID `dev.pickture.pelo` (the Kotlin package stays `com.spop.poverlay` to keep upstream fixes easy to apply), so it installs alongside, not over, upstream Grupetto.
 - The update checker points at `RVPick/grupetto` releases.
 - Helper scripts in `scripts/`.
 - A home screen (`launcher/HomeActivity`): Start/End ride, pinned app tiles (hold to unpin, pin more from All apps), and a Peloton button back to the stock launcher.
 
 Design reference: https://claude.ai/artifact/FtYen1SV3nSkt6xDdwz7si (1280×720 dp screens)
 
-Pull upstream changes with `git fetch upstream && git switch main && git merge upstream/main && git switch pelo && git merge main`.
+### Taking upstream fixes
+
+Pelo has replaced most of Grupetto's overlay and settings UI, so merging upstream wholesale would conflict. Take individual fixes instead, mainly sensor, Bluetooth/FTMS and heart-rate changes, which track Peloton's undocumented internals:
+
+1. `scripts/upstream-check.sh` lists upstream commits not yet in `pelo`, grouped by area (`-v` shows the files each one touches).
+2. On `pelo`, run `git cherry-pick <sha>` for each fix you want, then `scripts/deploy.sh` and test on the bike.
+3. Optionally keep the fork's `develop` in sync: `git switch develop && git merge --ff-only upstream/develop && git push origin develop && git switch pelo`.
 
 ## Safety rules
 
@@ -29,6 +35,7 @@ Pull upstream changes with `git fetch upstream && git switch main && git merge u
 | `scripts/deploy.sh [--debug]` | Build, `adb install -r`, grant permissions, launch. Release by default; `--debug` is much slower on the bike. |
 | `scripts/restore.sh [--all]` | Uninstall our app and restore Peloton's home screen (`--all` also removes upstream Grupetto and NewPipe) |
 | `scripts/set-home.sh` | Make Pelo the home screen (the Home / "P" button). Undo with `restore.sh`, or tap **Peloton** on Pelo's home screen for a one-off visit. |
+| `scripts/upstream-check.sh [-v]` | List upstream Grupetto commits not yet in `pelo`, grouped into sensor/Bluetooth/heart rate (worth reviewing), overlay UI (usually skip) and other |
 | `scripts/grant.sh` | Grant overlay, package-install, location and battery-optimization exemptions over ADB. Changing permissions kills the running app, so relaunch afterwards. |
 | `scripts/launch.sh <app>` | Open an app on the bike (`netflix`, `newpipe`, `grupetto`, `peloton`, `pelo`, or a package name) |
 
