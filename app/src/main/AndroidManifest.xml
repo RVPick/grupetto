@@ -55,6 +55,15 @@
 
 
 
+    <!-- Lets the home screen list installed apps (Android 11 package visibility). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <package android:name="com.peloton.launcher" />
+    </queries>
+
     <application
         android:name=".GrupettoApplication"
         android:allowBackup="true"
@@ -64,6 +73,24 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PTONOverlay"
         tools:targetApi="30">
+        <!-- Bike home screen. Peloton's launcher stays installed as the fallback; scripts/restore.sh switches back. -->
+        <activity
+            android:name=".launcher.HomeActivity"
+            android:exported="true"
+            android:label="Pelo Home"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.PeloHome">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

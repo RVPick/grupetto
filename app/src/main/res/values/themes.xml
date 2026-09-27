@@ -5,4 +5,12 @@
         <item name="android:windowMinWidthMajor">95%</item>
         <item name="android:windowMinWidthMinor">95%</item>
     </style>
+
+    <style name="Theme.PeloHome" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/pelo_woodsmoke</item>
+        <item name="android:statusBarColor">@color/pelo_woodsmoke</item>
+        <item name="android:navigationBarColor">@color/pelo_woodsmoke</item>
+    </style>
+
+    <color name="pelo_woodsmoke">#101113</color>
 </resources>

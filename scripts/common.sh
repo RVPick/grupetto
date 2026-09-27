@@ -4,6 +4,7 @@
 PELO_PACKAGES=(dev.pickture.pelo)
 PELO_APP=dev.pickture.pelo
 PELO_ACTIVITY=dev.pickture.pelo/com.spop.poverlay.MainActivity
+PELO_HOME=dev.pickture.pelo/com.spop.poverlay.launcher.HomeActivity
 
 # Peloton's stock launcher: the way back if anything goes wrong.
 PELOTON_HOME=com.peloton.launcher/.LauncherActivity

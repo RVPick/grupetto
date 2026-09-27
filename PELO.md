@@ -9,6 +9,7 @@ Differences from upstream:
 - Application ID `dev.pickture.pelo` (the Kotlin package stays `com.spop.poverlay` to keep upstream merges easy), so it installs alongside, not over, upstream Grupetto.
 - The update checker points at `RVPick/grupetto` releases.
 - Helper scripts in `scripts/`.
+- A home screen (`launcher/HomeActivity`): Start/End ride, pinned app tiles (hold to unpin, pin more from All apps), and a Peloton button back to the stock launcher.
 
 Design reference: https://claude.ai/artifact/FtYen1SV3nSkt6xDdwz7si (1280×720 dp screens)
 
@@ -26,6 +27,7 @@ Pull upstream changes with `git fetch upstream && git switch main && git merge u
 |---|---|
 | `scripts/deploy.sh [--release]` | Build, `adb install -r`, grant permissions, launch |
 | `scripts/restore.sh [--all]` | Uninstall our app and restore Peloton's home screen (`--all` also removes upstream Grupetto and NewPipe) |
+| `scripts/set-home.sh` | Make Pelo the home screen (the Home / "P" button). Undo with `restore.sh`, or tap **Peloton** on Pelo's home screen for a one-off visit. |
 | `scripts/grant.sh` | Grant overlay, package-install, location and battery-optimization exemptions over ADB. Changing permissions kills the running app, so relaunch afterwards. |
 | `scripts/launch.sh <app>` | Open an app on the bike (`netflix`, `newpipe`, `grupetto`, `peloton`, `pelo`, or a package name) |
 
