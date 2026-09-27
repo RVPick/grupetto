@@ -21,7 +21,7 @@ object PeloColors {
     /** Red text and lines on black; plain Cardinal is too dark for thin strokes. */
     val CardinalBright = Color(0xFFE8323F)
 
-    val OverlayBackground = Color(0xF5101113)
+    val OverlayBackground = Woodsmoke
     val Surface = Color(0xFF1C1E21)
     val Divider = Color(0xFF2C2F33)
 

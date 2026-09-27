@@ -33,6 +33,8 @@ class OverlayDialogViewModel(
 
 
     val touchTargetHeight = MutableStateFlow(0f)
+    // Height of the timer tab / compact pill, so the touch target covers all of it
+    private var timerOverlayHeight = 0
     // When overlay is hidden, an invisible touch target appears to accept touches:
     // - Touch target visibility is the opposite of the main view
     // - Overlay has FLAG_NOT_TOUCHABLE if it has started hiding
@@ -44,7 +46,8 @@ class OverlayDialogViewModel(
 
         if (isMinimizeDone) {
             touchTargetVisiblity.value = View.VISIBLE
-            touchTargetHeight.value = remainingHeight + OverlayService.HiddenTouchTargetMarginPx
+            touchTargetHeight.value =
+                remainingHeight + timerOverlayHeight + OverlayService.HiddenTouchTargetMarginPx
         } else {
             touchTargetVisiblity.value = View.GONE
             touchTargetHeight.value = 0f
@@ -89,6 +92,7 @@ class OverlayDialogViewModel(
     }
 
     fun onTimerOverlayLayout(size : IntSize){
+        timerOverlayHeight = size.height
         horizontalDragScreenRange = calculateHorizontalDragScreenRange(size.width)
         val (_, currentHeight) = dialogSizeParams.value
         minimizedDialogSizeParams.value = size.width to currentHeight
