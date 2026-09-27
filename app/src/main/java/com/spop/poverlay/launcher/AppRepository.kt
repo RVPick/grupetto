@@ -5,6 +5,8 @@ import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.net.Uri
 import android.os.Process
 import android.os.SystemClock
 import androidx.compose.ui.graphics.ImageBitmap
@@ -15,6 +17,8 @@ data class LaunchableApp(
     val packageName: String,
     val label: String,
     val icon: ImageBitmap,
+    /** Came with the tablet, so it can't be uninstalled. */
+    val isSystem: Boolean = false,
 )
 
 /** An app opened since boot that hasn't been closed from Pelo since. */
@@ -44,6 +48,8 @@ class AppRepository(private val context: Context) {
                     packageName = info.packageName,
                     label = info.loadLabel(pm).toString(),
                     icon = info.loadIcon(pm).toBitmap(IconSizePx, IconSizePx).asImageBitmap(),
+                    isSystem = info.applicationInfo.flags and
+                        (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0,
                 )
             }
             .sortedBy { it.label.lowercase() }
@@ -108,6 +114,10 @@ class AppRepository(private val context: Context) {
         val now = System.currentTimeMillis()
         prefs.edit().apply { packages.forEach { putLong(KeyClosedPrefix + it, now) } }.apply()
     }
+
+    /** Opens Android's own "uninstall this app?" confirmation. */
+    fun uninstallIntent(packageName: String): Intent =
+        Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))
 
     fun launchIntent(packageName: String): Intent? =
         context.packageManager.getLaunchIntentForPackage(packageName)

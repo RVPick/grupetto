@@ -8,7 +8,6 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -41,6 +40,8 @@ class HomeActivity : ComponentActivity() {
     // Bumped on every resume so newly installed apps show up.
     private var refreshKey by mutableIntStateOf(0)
 
+    private var showAllApps by mutableStateOf(false)
+
     // "Close apps" window: running apps (null without usage access) and free memory.
     private var showRunningApps by mutableStateOf(false)
     private var runningApps by mutableStateOf<List<RunningApp>?>(emptyList())
@@ -55,7 +56,6 @@ class HomeActivity : ComponentActivity() {
         setContent {
             val rideActive by OverlayService.isRunning.collectAsState()
             val heartRateDevice by HeartRateManager.connectedDevice.collectAsState()
-            var showAllApps by remember { mutableStateOf(false) }
             var pinned by remember { mutableStateOf<List<String>>(emptyList()) }
 
             val allApps by produceState(emptyList<LaunchableApp>(), refreshKey) {
@@ -68,10 +68,6 @@ class HomeActivity : ComponentActivity() {
                     value = greeting()
                     delay(15_000)
                 }
-            }
-            LaunchedEffect(refreshKey) {
-                showAllApps = false
-                showRunningApps = false
             }
 
             val byPackage = allApps.associateBy { it.packageName }
@@ -112,6 +108,7 @@ class HomeActivity : ComponentActivity() {
                     },
                     onOpenSystemSettings = { startActivity(Intent(Settings.ACTION_SETTINGS)) },
                     onOpenPeloton = ::openPeloton,
+                    onUninstall = { pkg -> startActivity(repository.uninstallIntent(pkg)) },
                     onShowRunningApps = { show ->
                         showRunningApps = show
                         if (show) refreshRunningApps()
@@ -136,6 +133,10 @@ class HomeActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        // Leaving home closes its windows. Android's uninstall dialog only pauses home,
+        // so All apps stays open for uninstalling several apps in a row.
+        showAllApps = false
+        showRunningApps = false
         // Leaving home for an app: bring the full overlay back.
         if (!skipOverlayRestore) {
             sendOverlayAction(OverlayService.ActionRestoreOverlay)

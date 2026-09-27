@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
@@ -83,6 +84,7 @@ class HomeActions(
     val onCloseApp: (String) -> Unit,
     val onCloseAllApps: () -> Unit,
     val onSwitchToApp: (String) -> Unit,
+    val onUninstall: (String) -> Unit,
 )
 
 @Composable
@@ -473,6 +475,25 @@ private fun AllAppsSheet(state: HomeState, actions: HomeActions) {
                         verticalAlignment = Alignment.Top
                     ) {
                         Image(app.icon, contentDescription = null, modifier = Modifier.size(48.dp))
+                        Spacer(Modifier.weight(1f))
+                        if (!app.isSystem) {
+                            Box(
+                                Modifier
+                                    .padding(end = 8.dp)
+                                    .size(44.dp)
+                                    .background(PeloColors.Woodsmoke, CircleShape)
+                                    .clip(CircleShape)
+                                    .clickable { actions.onUninstall(app.packageName) },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Filled.Delete,
+                                    contentDescription = "Uninstall ${app.label}",
+                                    tint = PeloColors.Pumice,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
                         Text(
                             if (pinned) "Pinned" else "Pin",
                             color = if (pinned) PeloColors.Text else PeloColors.Pumice,

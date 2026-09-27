@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- "Close apps" on the home screen -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
+    <!-- Uninstall from All apps (Android always asks the user to confirm) -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <!-- Lists recently used apps in "Close apps"; granted over ADB (scripts/grant.sh) -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
