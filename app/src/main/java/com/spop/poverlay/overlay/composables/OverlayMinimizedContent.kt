@@ -99,7 +99,9 @@ fun OverlayMinimizedContent(
         verticalAlignment = Alignment.CenterVertically
     ) {
         val infiniteTransition = rememberInfiniteTransition()
-        if (!isMinimized || showTimerWhenMinimized || timerPaused) {
+        // The "Timer in compact mode" switch decides, even while paused (Grupetto used to
+        // always show a paused timer, which made the switch look broken off the bike).
+        if (!isMinimized || showTimerWhenMinimized) {
 
             val timerAlpha = if (timerPaused) {
                 infiniteTransition.animateFloat(
