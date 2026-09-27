@@ -89,6 +89,7 @@ class HomeActions(
     val onCloseAllApps: () -> Unit,
     val onSwitchToApp: (String) -> Unit,
     val onUninstall: (String) -> Unit,
+    val onOpenConnections: () -> Unit,
 )
 
 @Composable
@@ -148,15 +149,16 @@ private fun Header(state: HomeState, actions: HomeActions) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             CloseAppsButton { actions.onShowRunningApps(true) }
-            StatusChip("Bike", state.bikeConnected)
-            StatusChip(state.heartRateDevice ?: "No HR strap", state.heartRateDevice != null)
+            // Tapping the status chips opens Connections (heart rate, headphones, broadcasting).
+            StatusChip("Bike", state.bikeConnected, actions.onOpenConnections)
+            StatusChip(state.heartRateDevice ?: "No HR strap", state.heartRateDevice != null, actions.onOpenConnections)
         }
     }
 }
 
 @Composable
-private fun StatusChip(label: String, live: Boolean) {
-    Chip(label) {
+private fun StatusChip(label: String, live: Boolean, onClick: () -> Unit) {
+    Chip(label, onClick) {
         Box(
             Modifier
                 .size(8.dp)

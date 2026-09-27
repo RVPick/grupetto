@@ -114,6 +114,10 @@ class HomeActivity : ComponentActivity() {
                     onOpenSystemSettings = { startActivity(Intent(Settings.ACTION_SETTINGS)) },
                     onOpenPeloton = ::openPeloton,
                     onUninstall = { pkg -> startActivity(repository.uninstallIntent(pkg)) },
+                    onOpenConnections = {
+                        skipOverlayRestore = true
+                        startActivity(Intent(this, ConnectionsActivity::class.java))
+                    },
                     onShowRunningApps = { show ->
                         showRunningApps = show
                         if (show) refreshRunningApps()
