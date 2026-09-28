@@ -51,14 +51,16 @@ class RideActivity : ComponentActivity() {
         setContent {
             val session by OverlayService.session.collectAsState()
             var showAppPicker by remember { mutableStateOf(false) }
-            val pinnedApps by produceState(emptyList<LaunchableApp>(), showAppPicker) {
-                if (showAppPicker) {
-                    value = withContext(Dispatchers.IO) {
-                        val apps = repository.loadApps()
-                        val pinned = repository.pinnedPackages(apps.map { it.packageName })
-                        val byPackage = apps.associateBy { it.packageName }
-                        pinned.mapNotNull { byPackage[it] }
-                    }
+            // Load pinned apps as soon as the dashboard opens (loading every icon takes a moment
+            // on the bike), and refresh each time the picker opens, keeping the last list meanwhile.
+            // Null means the first load hasn't finished.
+            val pinnedApps by produceState<List<LaunchableApp>?>(null, showAppPicker) {
+                if (value != null && !showAppPicker) return@produceState // no reload when it closes
+                value = withContext(Dispatchers.IO) {
+                    val apps = repository.loadApps()
+                    val pinned = repository.pinnedPackages(apps.map { it.packageName })
+                    val byPackage = apps.associateBy { it.packageName }
+                    pinned.mapNotNull { byPackage[it] }
                 }
             }
 
@@ -95,7 +97,7 @@ class RideActivity : ComponentActivity() {
 }
 
 @Composable
-private fun rideState(session: RideSession, pinnedApps: List<LaunchableApp>, showAppPicker: Boolean): RideState {
+private fun rideState(session: RideSession, pinnedApps: List<LaunchableApp>?, showAppPicker: Boolean): RideState {
     val sensor = session.sensor
     val timer = session.timer
     val timerLabel by timer.timerLabel.collectAsState()

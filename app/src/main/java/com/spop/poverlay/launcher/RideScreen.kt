@@ -65,7 +65,8 @@ data class RideState(
     val calories: String,
     val powerGraph: List<Float>,
     val powerGraphMax: Float,
-    val pinnedApps: List<LaunchableApp>,
+    /** Null while the first load is still running. */
+    val pinnedApps: List<LaunchableApp>?,
     val showAppPicker: Boolean,
 )
 
@@ -428,7 +429,7 @@ private fun RideButton(
 }
 
 @Composable
-private fun AppPicker(apps: List<LaunchableApp>, actions: RideActions) {
+private fun AppPicker(apps: List<LaunchableApp>?, actions: RideActions) {
     Box(
         Modifier
             .fillMaxSize()
@@ -441,7 +442,7 @@ private fun AppPicker(apps: List<LaunchableApp>, actions: RideActions) {
                 .width(880.dp)
                 .background(PeloColors.Surface, CardShape)
                 .border(1.dp, PeloColors.Divider, CardShape)
-                .clickable(enabled = false) {}
+                .consumeTaps() // taps on the panel shouldn't reach the background and close it
                 .padding(32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -469,7 +470,14 @@ private fun AppPicker(apps: List<LaunchableApp>, actions: RideActions) {
                     Icon(Icons.Filled.Close, contentDescription = "Close", tint = PeloColors.Text, modifier = Modifier.size(28.dp))
                 }
             }
-            if (apps.isEmpty()) {
+            if (apps == null) {
+                Text(
+                    "Loading your apps…",
+                    color = PeloColors.Pumice,
+                    fontFamily = PeloFonts.Body,
+                    fontSize = 17.sp
+                )
+            } else if (apps.isEmpty()) {
                 Text(
                     "No pinned apps yet. Pin some from All apps on the home screen.",
                     color = PeloColors.Pumice,

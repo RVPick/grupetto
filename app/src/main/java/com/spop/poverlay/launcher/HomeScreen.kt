@@ -450,7 +450,7 @@ private fun AllAppsSheet(state: HomeState, actions: HomeActions) {
         Modifier
             .fillMaxSize()
             .background(PeloColors.Woodsmoke)
-            .clickable(enabled = false) {}
+            .consumeTaps() // keep taps from reaching the home screen underneath
             .padding(horizontal = 40.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -574,7 +574,7 @@ private fun RunningAppsSheet(state: HomeState, actions: HomeActions) {
                 .width(760.dp)
                 .background(PeloColors.Surface, CardShape)
                 .border(1.dp, PeloColors.Divider, CardShape)
-                .clickable(enabled = false) {}
+                .consumeTaps() // taps on the panel shouldn't reach the background and close it
                 .padding(32.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
