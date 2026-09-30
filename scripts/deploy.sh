@@ -19,5 +19,5 @@ echo "Installing $(basename "$apk") ($(du -h "$apk" | cut -f1))"
 adb install -r "$apk" >/dev/null
 
 "$(dirname "$0")/grant.sh" >/dev/null
-adb shell am start -n "$PELO_ACTIVITY" >/dev/null
-echo "Launched $PELO_ACTIVITY"
+adb shell am start -n "$PELO_HOME" >/dev/null
+echo "Launched $PELO_HOME"
