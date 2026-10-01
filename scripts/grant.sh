@@ -17,4 +17,13 @@ adb shell appops set "$PELO_APP" GET_USAGE_STATS allow
 # Keep the overlay service alive during long rides.
 adb shell dumpsys deviceidle whitelist "+$PELO_APP" >/dev/null
 
-echo "Granted overlay, install, location, usage access and battery-optimization exemptions to $PELO_APP"
+# No mini player (picture-in-picture) for DRM streaming apps: this tablet's display hardware
+# can't draw protected video in the small window, so it only shows black. SmartTube, Xtra and
+# NewPipe play unprotected video and keep theirs.
+for app in com.netflix.mediaclient com.disney.disneyplus com.amazon.avod.thirdpartyclient com.peacocktv.peacockandroid; do
+    if is_installed "$app"; then
+        adb shell appops set "$app" PICTURE_IN_PICTURE ignore
+    fi
+done
+
+echo "Granted overlay, install, location, usage access and battery-optimization exemptions to $PELO_APP; mini player off for DRM streaming apps"
