@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Pelo: shrink and optimize release builds, but keep class and method names so
+# crash reports from the bike stay readable.
+-dontobfuscate
+
+# Read field by field from Peloton's sensor service; keep exactly as written.
+-keep class com.spop.poverlay.sensor.BikeData { *; }
