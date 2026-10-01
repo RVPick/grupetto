@@ -98,6 +98,9 @@ class OverlayService : LifecycleEnabledService() {
     }
 
     private val overlayHidden = MutableStateFlow(false)
+    // Last geometry applied to each overlay window, to skip no-op relayouts.
+    private var lastOverlayLayout: List<Int>? = null
+    private var lastTouchTargetLayout: List<Int>? = null
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var wakeLockRefreshJob: Job? = null
@@ -358,8 +361,20 @@ class OverlayService : LifecycleEnabledService() {
                         View.GONE
                     }
                     disableClipOnParents(currentOverlay)
-                    wm.updateViewLayout(currentOverlay, overlayParams)
-                    wm.updateViewLayout(currentTouchTarget, touchTargetParams)
+                    // Only re-layout a window when its geometry or flags changed. Each call is a
+                    // window manager relayout, and redundant ones queued up ahead of Home and Back.
+                    val overlayState = listOf(overlayParams.x, overlayParams.y, overlayParams.width,
+                        overlayParams.height, overlayParams.gravity, overlayParams.flags)
+                    if (overlayState != lastOverlayLayout) {
+                        lastOverlayLayout = overlayState
+                        wm.updateViewLayout(currentOverlay, overlayParams)
+                    }
+                    val touchTargetState = listOf(touchTargetParams.x, touchTargetParams.y,
+                        touchTargetParams.width, touchTargetParams.height, touchTargetParams.gravity)
+                    if (touchTargetState != lastTouchTargetLayout) {
+                        lastTouchTargetLayout = touchTargetState
+                        wm.updateViewLayout(currentTouchTarget, touchTargetParams)
+                    }
                 }.collect {}
             }
         }

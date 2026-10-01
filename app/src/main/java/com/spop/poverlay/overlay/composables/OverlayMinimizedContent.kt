@@ -1,6 +1,5 @@
 package com.spop.poverlay.overlay.composables
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +24,11 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import com.spop.poverlay.overlay.OverlayItem
@@ -92,7 +96,6 @@ fun OverlayMinimizedContent(
                 shape = backgroundShape,
             )
             .padding(start = 22.dp, end = 6.dp, top = 6.dp, bottom = 6.dp)
-            .animateContentSize()
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
@@ -124,12 +127,16 @@ fun OverlayMinimizedContent(
                 1f
             }
 
-            Text(
-                timerLabel,
-                color = PeloColors.Text,
-                fontFamily = PeloFonts.Numbers,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 30.sp,
+            FixedWidthNumber(
+                value = timerLabel,
+                widest = if (timerLabel.count { it == ':' } > 1) "8:88:88" else "88:88",
+                style = TextStyle(
+                    color = PeloColors.Text,
+                    fontFamily = PeloFonts.Numbers,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 30.sp,
+                    textAlign = TextAlign.Center
+                ),
                 modifier = Modifier.alpha(timerAlpha)
             )
         }
@@ -138,12 +145,12 @@ fun OverlayMinimizedContent(
             // Metrics and their order come from the Overlay page (OverlayLayoutStore).
             layout.pillItems.forEach { item ->
                 when (item) {
-                    OverlayItem.Output -> MiniMetric(powerLabel, "W", MetricPowerColor)
-                    OverlayItem.Cadence -> MiniMetric(cadenceLabel, "rpm", MetricCadenceColor)
-                    OverlayItem.Resistance -> MiniMetric(resistanceLabel, "%", MetricResistanceColor)
-                    OverlayItem.HeartRate -> MiniMetric(heartRateLabel, "bpm", MetricHeartRateColor)
-                    OverlayItem.Speed -> MiniMetric(speedLabel, speedUnit, MetricSpeedColor)
-                    OverlayItem.Calories -> MiniMetric(caloriesLabel, "kcal", MetricCalorieColor)
+                    OverlayItem.Output -> MiniMetric(powerLabel, "888", "W", MetricPowerColor)
+                    OverlayItem.Cadence -> MiniMetric(cadenceLabel, "188", "rpm", MetricCadenceColor)
+                    OverlayItem.Resistance -> MiniMetric(resistanceLabel, "100", "%", MetricResistanceColor)
+                    OverlayItem.HeartRate -> MiniMetric(heartRateLabel, "188", "bpm", MetricHeartRateColor)
+                    OverlayItem.Speed -> MiniMetric(speedLabel, "88.8", speedUnit, MetricSpeedColor)
+                    OverlayItem.Calories -> MiniMetric(caloriesLabel, "1888", "kcal", MetricCalorieColor)
                     OverlayItem.Chart -> Unit
                 }
             }
@@ -192,14 +199,18 @@ fun OverlayMinimizedContent(
 }
 
 @Composable
-private fun MiniMetric(value: String, unit: String, color: Color) {
+private fun MiniMetric(value: String, widest: String, unit: String, color: Color) {
     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(
-            value,
-            color = color,
-            fontFamily = PeloFonts.Numbers,
-            fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
+        FixedWidthNumber(
+            value = value,
+            widest = widest,
+            style = TextStyle(
+                color = color,
+                fontFamily = PeloFonts.Numbers,
+                fontWeight = FontWeight.Bold,
+                fontSize = 30.sp,
+                textAlign = TextAlign.End
+            ),
             modifier = Modifier.alignByBaseline()
         )
         Text(
@@ -210,6 +221,23 @@ private fun MiniMetric(value: String, unit: String, color: Color) {
             modifier = Modifier.alignByBaseline()
         )
     }
+}
+
+/**
+ * Text in a slot as wide as [widest] would be, so the compact pill keeps one size while the
+ * numbers change. Barlow's digits differ in width, and every change in the pill's size makes
+ * the overlay window re-layout in Android's window manager, which during a ride delayed Home
+ * and Back by seconds.
+ */
+@OptIn(ExperimentalTextApi::class)
+@Composable
+private fun FixedWidthNumber(value: String, widest: String, style: TextStyle, modifier: Modifier = Modifier) {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val slotWidth = remember(widest, style, density) {
+        with(density) { measurer.measure(widest, style).size.width.toDp() }
+    }
+    Text(value, style = style, maxLines = 1, softWrap = false, modifier = modifier.width(slotWidth))
 }
 
 @Composable
