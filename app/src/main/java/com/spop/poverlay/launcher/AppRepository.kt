@@ -108,8 +108,11 @@ class AppRepository(private val context: Context) {
             }
         }
         val launchable = launchablePackages()
-        return lastResumed
-            .filter { (pkg, lastUsed) -> pkg in launchable && lastUsed > prefs.getLong(KeyClosedPrefix + pkg, 0L) }
+        val apps = lastResumed.filterKeys { it in launchable }
+        // Peloton's screens (launcher, activation/classes app) show up as one "Peloton" entry.
+        val pelotonLastUsed = lastResumed.filterKeys { it in PelotonScreenPackages }.values.maxOrNull()
+        return (apps + listOfNotNull(pelotonLastUsed?.let { PelotonKey to it }))
+            .filter { (key, lastUsed) -> lastUsed > prefs.getLong(KeyClosedPrefix + key, 0L) }
             .toList()
             .sortedByDescending { it.second }
     }
@@ -124,10 +127,19 @@ class AppRepository(private val context: Context) {
      * Peloton's apps are never included). Apps on screen, like a mini player, aren't affected.
      */
     fun closeApps(except: String? = null) {
+        close(launchablePackages() + PelotonKey - setOfNotNull(except))
+    }
+
+    /**
+     * Closes the given apps if they're in the background. [PelotonKey] stands for Peloton's
+     * screens only ([PelotonScreenPackages]); Peloton's sensor services, keyboard and
+     * background services are never closed (Pelo reads the bike through the sensor services).
+     */
+    fun close(keys: Collection<String>) {
         val activityManager = context.getSystemService(ActivityManager::class.java)
-        val targets = launchablePackages() - setOfNotNull(except)
-        targets.forEach(activityManager::killBackgroundProcesses)
-        markClosed(targets)
+        keys.flatMap { if (it == PelotonKey) PelotonScreenPackages else listOf(it) }
+            .forEach(activityManager::killBackgroundProcesses)
+        markClosed(keys)
     }
 
     fun markClosed(packages: Collection<String>) {
@@ -148,7 +160,13 @@ class AppRepository(private val context: Context) {
     }
 
     /** The Peloton logo, taken from Peloton's own app on the tablet (null if it's missing). */
-    fun pelotonLogo(): ImageBitmap? = try {
+    private val cachedPelotonLogo by lazy { loadPelotonLogo() }
+    fun pelotonLogo(): ImageBitmap? = cachedPelotonLogo
+
+    /** Peloton's screens as a running-apps entry, keyed by [PelotonKey]. */
+    fun pelotonApp(): LaunchableApp? = pelotonLogo()?.let { LaunchableApp(PelotonKey, "Peloton", it, canUninstall = false) }
+
+    private fun loadPelotonLogo(): ImageBitmap? = try {
         context.packageManager.getApplicationIcon(PelotonLogoPackage)
             .toBitmap(IconSizePx, IconSizePx).asImageBitmap()
     } catch (e: Exception) {
@@ -170,6 +188,19 @@ class AppRepository(private val context: Context) {
         private const val KeyClosedPrefix = "closed_"
         private const val KeyCloseOthers = "close_others_on_open"
         private const val PelotonLogoPackage = "com.peloton.activity"
+
+        /** Stands for Peloton's screens in the running-apps list and when closing apps. */
+        const val PelotonKey = "peloton"
+
+        /**
+         * Peloton's screens: started by the Peloton button and safe to close like any app.
+         * Never include com.peloton.service.SensorData or com.onepeloton.affernetservice.
+         */
+        val PelotonScreenPackages = listOf(
+            "com.peloton.launcher",
+            "com.peloton.activity",
+            "com.onepeloton.workoutservices.app",
+        )
         private const val IconSizePx = 144
         const val MaxPinned = 6
 

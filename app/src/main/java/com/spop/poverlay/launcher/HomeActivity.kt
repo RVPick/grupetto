@@ -148,7 +148,7 @@ class HomeActivity : ComponentActivity() {
                     },
                     onSwitchToApp = { pkg ->
                         showRunningApps = false
-                        openApp(pkg)
+                        if (pkg == AppRepository.PelotonKey) openPeloton() else openApp(pkg)
                     },
                 ),
             )
@@ -230,10 +230,16 @@ class HomeActivity : ComponentActivity() {
             .addCategory(Intent.CATEGORY_HOME)
             .setComponent(ComponentName(PelotonLauncherPackage, PelotonLauncherActivity))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        try {
-            startActivity(intent)
-        } catch (e: Exception) {
-            toast("Peloton's home screen isn't available")
+        lifecycleScope.launch {
+            // Peloton is a heavy app too: close the others first if that's turned on.
+            if (repository.closeOthersOnOpen) {
+                withContext(Dispatchers.IO) { repository.closeApps(except = AppRepository.PelotonKey) }
+            }
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                toast("Peloton's home screen isn't available")
+            }
         }
     }
 
@@ -244,8 +250,10 @@ class HomeActivity : ComponentActivity() {
                 if (appsByPackage.isEmpty()) {
                     appsByPackage = repository.loadApps().associateBy { it.packageName }
                 }
+                val peloton = repository.pelotonApp()
                 val running = repository.runningPackages()?.mapNotNull { (pkg, lastUsed) ->
-                    appsByPackage[pkg]?.let { RunningApp(it, lastUsed) }
+                    val app = if (pkg == AppRepository.PelotonKey) peloton else appsByPackage[pkg]
+                    app?.let { RunningApp(it, lastUsed) }
                 }
                 running to availableMemoryMb(activityManager)
             }
@@ -259,14 +267,14 @@ class HomeActivity : ComponentActivity() {
      * Never touches Pelo or its ride overlay, or Peloton's system apps. Android only
      * lets us close apps that aren't in front, which while home is showing is all of them.
      */
+    /** Closes the given running-apps entries, or everything (including Peloton's screens) when null. */
     private fun closeApps(packages: List<String>?) {
         val activityManager = getSystemService(ActivityManager::class.java)
-        val targets = packages ?: repository.launchablePackages().toList()
-        runningApps = runningApps?.filterNot { it.app.packageName in targets }
+        runningApps = if (packages == null) runningApps?.let { emptyList() }
+        else runningApps?.filterNot { it.app.packageName in packages }
         lifecycleScope.launch {
             freeMemoryMb = withContext(Dispatchers.IO) {
-                targets.forEach(activityManager::killBackgroundProcesses)
-                repository.markClosed(targets)
+                if (packages == null) repository.closeApps() else repository.close(packages)
                 // Apps exit asynchronously; give the system a moment before measuring.
                 delay(2_000)
                 availableMemoryMb(activityManager)

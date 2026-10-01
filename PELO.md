@@ -82,3 +82,7 @@ Signing in and HD playback haven't been tested yet. HD depends on Widevine L1, w
 After `scripts/set-home.sh`, Pelo holds Android's HOME role (`dumpsys role`), which persists across reboots. On a cold boot Pelo's home screen came up about 24 s after the reboot, right after Android's `FallbackHome`. Peloton's boot receivers ran but never showed its launcher or activation screen; the only Peloton activity was `com.onepeloton.dm.android/.DummyActivity`, which is invisible. The tablet has no device owner or active device admin, so Peloton can't force its launcher through device policy.
 
 A reboot turns off ADB over Wi-Fi. Plug in USB and run `scripts/wifi.sh` to turn it back on.
+
+## Peloton's activation app can't be closed from Pelo (tested 2026-09-30)
+
+`com.peloton.activity` (the "Activate your Bike" and classes app, 100–180 MB) is a privileged system app signed with the platform key and holding `INTERNAL_SYSTEM_WINDOW`. It shows the "subscription removed" banner and a full-screen transparent `SECURE_SYSTEM_OVERLAY` window. Android treats an app with on-screen windows as visible, so `killBackgroundProcesses` (what Pelo's Close uses) can't stop it, and turning off its `SYSTEM_ALERT_WINDOW` app op has no effect because system windows bypass that switch. Pelo's "Peloton" entry in Running apps closes the launcher and workout service when it can. Freeing the activation app needs `adb shell am force-stop com.peloton.activity` (until it's next opened) or disabling the package.

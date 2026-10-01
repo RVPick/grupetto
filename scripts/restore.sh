@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Put the bike back the way Peloton shipped it: uninstall our apps and make
-# Peloton's launcher the home screen again. Never touches Peloton's packages.
+# Put the bike back the way Peloton shipped it: uninstall our apps, undo the permission
+# changes Pelo's scripts make to other apps, and make Peloton's launcher the home screen
+# again. Never uninstalls or disables Peloton's packages.
 #
 #   scripts/restore.sh            remove our apps only
 #   scripts/restore.sh --all      also remove the test apps (upstream Grupetto, NewPipe)
@@ -29,6 +30,14 @@ for pkg in "${packages[@]}"; do
         adb uninstall "$pkg" >/dev/null
     else
         echo "$pkg not installed"
+    fi
+done
+
+# Undo grant.sh's changes to other apps.
+# Mini player back to Android's default (Netflix shipped with it blocked, so leave it).
+for app in com.disney.disneyplus com.amazon.avod.thirdpartyclient com.peacocktv.peacockandroid; do
+    if is_installed "$app"; then
+        adb shell appops set "$app" PICTURE_IN_PICTURE default
     fi
 done
 
