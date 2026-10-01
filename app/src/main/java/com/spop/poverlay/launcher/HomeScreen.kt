@@ -29,6 +29,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
+import androidx.compose.material.SwitchDefaults
+import androidx.compose.material.Switch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Build
@@ -72,6 +74,7 @@ data class HomeState(
     val runningApps: List<RunningApp>? = emptyList(),
     val freeMemoryMb: Long? = null,
     val pelotonLogo: ImageBitmap? = null,
+    val closeOthersOnOpen: Boolean = true,
 )
 
 class HomeActions(
@@ -87,6 +90,7 @@ class HomeActions(
     val onShowRunningApps: (Boolean) -> Unit,
     val onCloseApp: (String) -> Unit,
     val onCloseAllApps: () -> Unit,
+    val onCloseOthersOnOpen: (Boolean) -> Unit,
     val onSwitchToApp: (String) -> Unit,
     val onUninstall: (String) -> Unit,
     val onOpenConnections: () -> Unit,
@@ -628,6 +632,8 @@ private fun RunningAppsSheet(state: HomeState, actions: HomeActions) {
                 }
             }
 
+            CloseOthersSwitch(state.closeOthersOnOpen, actions.onCloseOthersOnOpen)
+
             val running = state.runningApps
             when {
                 running == null -> Text(
@@ -650,6 +656,49 @@ private fun RunningAppsSheet(state: HomeState, actions: HomeActions) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CloseOthersSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(PeloColors.Woodsmoke, TileShape)
+            .border(1.dp, PeloColors.Divider, TileShape)
+            .clip(TileShape)
+            .clickable { onChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                "Close other apps when you open one",
+                color = PeloColors.Text,
+                fontFamily = PeloFonts.Body,
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp
+            )
+            Text(
+                "Keeps memory free for the app you're watching",
+                color = PeloColors.TextMuted,
+                fontFamily = PeloFonts.Body,
+                fontSize = 13.sp
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = PeloColors.Cardinal,
+                checkedTrackAlpha = 1f,
+                uncheckedThumbColor = PeloColors.Pumice,
+                uncheckedTrackColor = PeloColors.BorderStrong,
+                uncheckedTrackAlpha = 1f,
+            )
+        )
     }
 }
 

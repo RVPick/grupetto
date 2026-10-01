@@ -56,12 +56,14 @@ class HomeActivity : ComponentActivity() {
     private var runningApps by mutableStateOf<List<RunningApp>?>(emptyList())
     private var freeMemoryMb by mutableStateOf<Long?>(null)
     private var appsByPackage: Map<String, LaunchableApp> = emptyMap()
+    private var closeOthersOnOpen by mutableStateOf(true)
 
     // Set when opening our own settings screen, which minimizes the overlay itself.
     private var skipOverlayRestore = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        closeOthersOnOpen = repository.closeOthersOnOpen
         registerReceiver(packageChangeReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)
             addAction(Intent.ACTION_PACKAGE_REMOVED)
@@ -103,6 +105,7 @@ class HomeActivity : ComponentActivity() {
                     showRunningApps = showRunningApps,
                     runningApps = runningApps,
                     freeMemoryMb = freeMemoryMb,
+                    closeOthersOnOpen = closeOthersOnOpen,
                     pelotonLogo = pelotonLogo,
                 ),
                 actions = HomeActions(
@@ -139,6 +142,10 @@ class HomeActivity : ComponentActivity() {
                     },
                     onCloseApp = { closeApps(listOf(it)) },
                     onCloseAllApps = { closeApps(null) },
+                    onCloseOthersOnOpen = { on ->
+                        repository.closeOthersOnOpen = on
+                        closeOthersOnOpen = on
+                    },
                     onSwitchToApp = { pkg ->
                         showRunningApps = false
                         openApp(pkg)
@@ -198,13 +205,24 @@ class HomeActivity : ComponentActivity() {
         stopService(Intent(this, OverlayService::class.java))
     }
 
+    /**
+     * Opens an app. With "Close other apps when you open one" on (the default), first closes
+     * the other background apps so the app you open, usually a video, has the bike's memory.
+     */
     private fun openApp(packageName: String) {
         val intent = repository.launchIntent(packageName)
         if (intent == null) {
             toast("Couldn't open that app")
             return
         }
-        startActivity(intent)
+        if (!repository.closeOthersOnOpen) {
+            startActivity(intent)
+            return
+        }
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) { repository.closeApps(except = packageName) }
+            startActivity(intent)
+        }
     }
 
     private fun openPeloton() {

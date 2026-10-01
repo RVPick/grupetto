@@ -1,5 +1,6 @@
 package com.spop.poverlay.launcher
 
+import android.app.ActivityManager
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
@@ -113,6 +114,22 @@ class AppRepository(private val context: Context) {
             .sortedByDescending { it.second }
     }
 
+    /** Whether opening an app from Pelo first closes the other background apps. */
+    var closeOthersOnOpen: Boolean
+        get() = prefs.getBoolean(KeyCloseOthers, true)
+        set(value) = prefs.edit().putBoolean(KeyCloseOthers, value).apply()
+
+    /**
+     * Closes background apps Pelo can launch, except [except] (Pelo, its ride overlay and
+     * Peloton's apps are never included). Apps on screen, like a mini player, aren't affected.
+     */
+    fun closeApps(except: String? = null) {
+        val activityManager = context.getSystemService(ActivityManager::class.java)
+        val targets = launchablePackages() - setOfNotNull(except)
+        targets.forEach(activityManager::killBackgroundProcesses)
+        markClosed(targets)
+    }
+
     fun markClosed(packages: Collection<String>) {
         val now = System.currentTimeMillis()
         prefs.edit().apply { packages.forEach { putLong(KeyClosedPrefix + it, now) } }.apply()
@@ -151,6 +168,7 @@ class AppRepository(private val context: Context) {
     companion object {
         private const val KeyPinned = "pinned"
         private const val KeyClosedPrefix = "closed_"
+        private const val KeyCloseOthers = "close_others_on_open"
         private const val PelotonLogoPackage = "com.peloton.activity"
         private const val IconSizePx = 144
         const val MaxPinned = 6

@@ -70,7 +70,15 @@ class RideActivity : ComponentActivity() {
                 onDismissAppPicker = { showAppPicker = false },
                 onOpenApp = { pkg ->
                     showAppPicker = false
-                    repository.launchIntent(pkg)?.let(::startActivity)
+                    repository.launchIntent(pkg)?.let { intent ->
+                        // Same as home: close other background apps first if that's turned on.
+                        lifecycleScope.launch {
+                            if (repository.closeOthersOnOpen) {
+                                withContext(Dispatchers.IO) { repository.closeApps(except = pkg) }
+                            }
+                            startActivity(intent)
+                        }
+                    }
                 },
                 onEndRide = {
                     stopService(Intent(this, OverlayService::class.java))
