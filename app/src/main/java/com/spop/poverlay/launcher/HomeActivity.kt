@@ -11,7 +11,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -70,8 +70,8 @@ class HomeActivity : ComponentActivity() {
             addDataScheme("package")
         })
         setContent {
-            val rideActive by OverlayService.isRunning.collectAsState()
-            val heartRateDevice by HeartRateManager.connectedDevice.collectAsState()
+            val rideActive by OverlayService.isRunning.collectAsStateWithLifecycle()
+            val heartRateDevice by HeartRateManager.connectedDevice.collectAsStateWithLifecycle()
             var pinned by remember { mutableStateOf<List<String>>(emptyList()) }
 
             val allApps by produceState(emptyList<LaunchableApp>(), refreshKey) {

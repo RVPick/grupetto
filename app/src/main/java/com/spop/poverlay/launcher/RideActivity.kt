@@ -6,7 +6,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -49,7 +49,7 @@ class RideActivity : ComponentActivity() {
         }
 
         setContent {
-            val session by OverlayService.session.collectAsState()
+            val session by OverlayService.session.collectAsStateWithLifecycle()
             var showAppPicker by remember { mutableStateOf(false) }
             // Load pinned apps as soon as the dashboard opens (loading every icon takes a moment
             // on the bike), and refresh each time the picker opens, keeping the last list meanwhile.
@@ -100,27 +100,27 @@ class RideActivity : ComponentActivity() {
 private fun rideState(session: RideSession, pinnedApps: List<LaunchableApp>?, showAppPicker: Boolean): RideState {
     val sensor = session.sensor
     val timer = session.timer
-    val timerLabel by timer.timerLabel.collectAsState()
-    val timerPaused by timer.timerPaused.collectAsState()
-    val power by sensor.powerValue.collectAsState(initial = SensorValuePlaceholderText)
-    val cadence by sensor.rpmValue.collectAsState(initial = SensorValuePlaceholderText)
-    val resistance by sensor.resistanceValue.collectAsState(initial = SensorValuePlaceholderText)
-    val speed by sensor.speedValue.collectAsState(initial = SensorValuePlaceholderText)
-    val speedUnit by sensor.speedLabel.collectAsState(initial = "mph")
-    val calories by sensor.caloriesValue.collectAsState(initial = SensorValuePlaceholderText)
-    val maxPower by sensor.maxPower.collectAsState()
-    val avgCadence by sensor.avgCadence.collectAsState()
-    val totalEnergy by sensor.totalEnergy.collectAsState()
-    val totalDistanceMiles by sensor.totalDistance.collectAsState()
-    val heartRate by HeartRateManager.heartRate.collectAsState()
-    val heartRateDevice by HeartRateManager.connectedDevice.collectAsState()
-    val avgHeartRate by sensor.avgHeartRate.collectAsState()
-    val maxHeartRate by sensor.maxHeartRate.collectAsState()
+    val timerLabel by timer.timerLabel.collectAsStateWithLifecycle()
+    val timerPaused by timer.timerPaused.collectAsStateWithLifecycle()
+    val power by sensor.powerValue.collectAsStateWithLifecycle(initialValue = SensorValuePlaceholderText)
+    val cadence by sensor.rpmValue.collectAsStateWithLifecycle(initialValue = SensorValuePlaceholderText)
+    val resistance by sensor.resistanceValue.collectAsStateWithLifecycle(initialValue = SensorValuePlaceholderText)
+    val speed by sensor.speedValue.collectAsStateWithLifecycle(initialValue = SensorValuePlaceholderText)
+    val speedUnit by sensor.speedLabel.collectAsStateWithLifecycle(initialValue = "mph")
+    val calories by sensor.caloriesValue.collectAsStateWithLifecycle(initialValue = SensorValuePlaceholderText)
+    val maxPower by sensor.maxPower.collectAsStateWithLifecycle()
+    val avgCadence by sensor.avgCadence.collectAsStateWithLifecycle()
+    val totalEnergy by sensor.totalEnergy.collectAsStateWithLifecycle()
+    val totalDistanceMiles by sensor.totalDistance.collectAsStateWithLifecycle()
+    val heartRate by HeartRateManager.heartRate.collectAsStateWithLifecycle()
+    val heartRateDevice by HeartRateManager.connectedDevice.collectAsStateWithLifecycle()
+    val avgHeartRate by sensor.avgHeartRate.collectAsStateWithLifecycle()
+    val maxHeartRate by sensor.maxHeartRate.collectAsStateWithLifecycle()
     val zoneThresholds = listOf(
-        HeartRateManager.zone12.collectAsState().value,
-        HeartRateManager.zone23.collectAsState().value,
-        HeartRateManager.zone34.collectAsState().value,
-        HeartRateManager.zone45.collectAsState().value,
+        HeartRateManager.zone12.collectAsStateWithLifecycle().value,
+        HeartRateManager.zone23.collectAsStateWithLifecycle().value,
+        HeartRateManager.zone34.collectAsStateWithLifecycle().value,
+        HeartRateManager.zone45.collectAsStateWithLifecycle().value,
     )
 
     val metric = speedUnit != "mph"
