@@ -57,9 +57,9 @@ class RideActivity : ComponentActivity() {
             val pinnedApps by produceState<List<LaunchableApp>?>(null, showAppPicker) {
                 if (value != null && !showAppPicker) return@produceState // no reload when it closes
                 value = withContext(Dispatchers.IO) {
-                    val apps = repository.loadApps()
-                    val pinned = repository.pinnedPackages(apps.map { it.packageName })
-                    val byPackage = apps.associateBy { it.packageName }
+                    // Only the pinned apps' icons are needed here.
+                    val pinned = repository.pinnedPackages(repository.launchablePackages())
+                    val byPackage = repository.loadApps(only = pinned).associateBy { it.packageName }
                     pinned.mapNotNull { byPackage[it] }
                 }
             }

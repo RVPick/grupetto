@@ -1,7 +1,10 @@
 package com.spop.poverlay.launcher
 
 import android.app.ActivityManager
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
+import android.content.IntentFilter
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -37,8 +40,14 @@ import java.util.Locale
 class HomeActivity : ComponentActivity() {
     private val repository by lazy { AppRepository(this) }
 
-    // Bumped on every resume so newly installed apps show up.
+    // Bumped when an app is installed, updated or removed, to reload the app list. (Reloading
+    // every icon on each return home cost ~40% CPU right as you switched back to a video.)
     private var refreshKey by mutableIntStateOf(0)
+    private val packageChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            refreshKey++
+        }
+    }
 
     private var showAllApps by mutableStateOf(false)
 
@@ -53,6 +62,13 @@ class HomeActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        registerReceiver(packageChangeReceiver, IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addDataScheme("package")
+        })
         setContent {
             val rideActive by OverlayService.isRunning.collectAsState()
             val heartRateDevice by HeartRateManager.connectedDevice.collectAsState()
@@ -134,7 +150,6 @@ class HomeActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        refreshKey++
         // Keep the ride overlay out of the way while the home screen is showing.
         sendOverlayAction(OverlayService.ActionMinimizeOverlay)
     }
@@ -149,6 +164,11 @@ class HomeActivity : ComponentActivity() {
             sendOverlayAction(OverlayService.ActionRestoreOverlay)
         }
         skipOverlayRestore = false
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(packageChangeReceiver)
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {

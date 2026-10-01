@@ -34,14 +34,18 @@ data class RunningApp(
 class AppRepository(private val context: Context) {
     private val prefs = context.getSharedPreferences("launcher", Context.MODE_PRIVATE)
 
-    /** Every launchable app except this one and Peloton's own packages. Slow: call off the main thread. */
-    fun loadApps(): List<LaunchableApp> {
+    /**
+     * Every launchable app except this one and Peloton's own packages, or just [only] when given
+     * (icons are the slow part, so load only what's needed). Slow: call off the main thread.
+     */
+    fun loadApps(only: Collection<String>? = null): List<LaunchableApp> {
         val pm = context.packageManager
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         return pm.queryIntentActivities(intent, 0)
             .asSequence()
             .map { it.activityInfo }
             .filter { it.packageName != context.packageName && !isPelotonPackage(it.packageName) }
+            .filter { only == null || it.packageName in only }
             .distinctBy { it.packageName }
             .map { info ->
                 LaunchableApp(
