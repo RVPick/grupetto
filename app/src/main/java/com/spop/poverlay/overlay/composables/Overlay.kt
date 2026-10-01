@@ -139,6 +139,15 @@ fun Overlay(
 
     offsetCallback(visibilityOffset.y.toFloat(), size.value.height.toFloat())
 
+    // Once collapsed and the slide-out has finished, drop the full bar instead of drawing it
+    // off-screen, and drop the offset with it so the pill stays put. Expanding brings it back
+    // at its hidden position and slides it in.
+    val hiddenOffset = when (location) {
+        OverlayLocation.Top -> IntOffset(0, -mainContentHeight)
+        OverlayLocation.Bottom -> IntOffset(0, mainContentHeight)
+    }
+    val mainContentGone = minimized && visibilityOffset == hiddenOffset
+
     var horizontalDragOffset by remember { mutableStateOf(0f) }
     var verticalDragOffset by remember { mutableStateOf(0f) }
 
@@ -267,6 +276,9 @@ fun Overlay(
                 },
                 backgroundColor = Color.White,
                 modifier = Modifier
+                    // The overlay measures with unbounded width; without a limit the Snackbar
+                    // asks for an infinite width and crashes the app (and the home screen with it).
+                    .widthIn(max = 640.dp)
                     .padding(8.dp)
                     .zIndex(1f)
             ) {
@@ -277,20 +289,18 @@ fun Overlay(
         Column(
             modifier = Modifier
                 .wrapContentSize()
-                .offset { visibilityOffset },
+                .offset { if (mainContentGone) IntOffset.Zero else visibilityOffset },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             when (location) {
                 OverlayLocation.Top -> {
-                    mainContent()
-
+                    if (!mainContentGone) mainContent()
                     timer()
                 }
                 OverlayLocation.Bottom -> {
                     timer()
-                    mainContent()
-
+                    if (!mainContentGone) mainContent()
                 }
             }
         }
